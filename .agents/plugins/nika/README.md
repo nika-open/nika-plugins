@@ -5,26 +5,26 @@
 # nika · author AI workflows as checkable files
 
 Teach your agent to hand repeatable work to
-[Nika](https://github.com/supernovae-st/nika): a plain-text
+[Nika](https://github.com/nika-open/nika): a plain-text
 `.nika` workflow it can **check before a token is spent** and
 **verify after**. One install adds the full bundle from the
-[nika-plugins](https://github.com/supernovae-st/nika-plugins) marketplace —
+[nika-plugins](https://github.com/nika-open/nika-plugins) marketplace —
 your agent learns to author, debug, operate and migrate workflows on its own.
 
 ```sh
-brew install supernovae-st/tap/nika   # the binary first; the plugin invokes it
+brew install nika-open/tap/nika   # the binary first; the plugin invokes it
 
 # Claude Code
-claude plugin marketplace add supernovae-st/nika-plugins
+claude plugin marketplace add nika-open/nika-plugins
 claude plugin install nika@nika
 
 # Codex
-codex plugin marketplace add supernovae-st/nika-plugins
+codex plugin marketplace add nika-open/nika-plugins
 codex plugin add nika@nika
 ```
 
 Cursor, Grok Build and other clients: see
-[Install in your client](https://github.com/supernovae-st/nika-plugins#install-in-your-client).
+[Install in your client](https://github.com/nika-open/nika-plugins#install-in-your-client).
 Without a plugin, `nika init` writes part of this kit into a repository: the
 authoring skill, the three hooks, the Cursor rules and subagents, and the
 oracle wiring.
@@ -51,7 +51,7 @@ oracle wiring.
 | MCP oracle (9 tools) | `nika_check` · `nika_explain` · `nika_schema` · `nika_examples` · `nika_template` · `nika_canon` · `nika_catalog` · `nika_tools` · `nika_inspect` — read-only, by design |
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/supernovae-st/nika/main/media/gifs/editor-diagnostics.optimized.gif" alt="The language server's findings in an editor: a squiggle, its explanation, and one keystroke that clears it" width="640">
+  <img src="https://raw.githubusercontent.com/nika-open/nika/main/media/gifs/editor-diagnostics.optimized.gif" alt="The language server's findings in an editor: a squiggle, its explanation, and one keystroke that clears it" width="640">
 </p>
 
 ## The work it supports
@@ -106,6 +106,9 @@ callable is a tool under `invoke:`, and the engine ships its own
 
 ## Links
 
-Docs: <https://docs.nika.sh> · Spec: <https://github.com/supernovae-st/nika-spec>
+Docs: <https://docs.nika.sh> · Spec: <https://github.com/nika-open/nika-spec>
 · Site: <https://nika.sh> · Engine (AGPL-3.0-or-later):
-<https://github.com/supernovae-st/nika>
+<https://github.com/nika-open/nika>
+
+Created and maintained by Thibaut Mélen ([@ThibautMelen](https://github.com/ThibautMelen)) ·
+SuperNovae Studio.

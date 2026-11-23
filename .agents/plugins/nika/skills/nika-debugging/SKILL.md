@@ -187,7 +187,7 @@ does not prove that the producer told the truth.
   provider returned garbage — a provider-side outage or a model
   regression is named as a hypothesis, never asserted as fact.
 - Never edit a trace. Never delete a paused trace to "clean up".
-- If the binary is missing: `brew install supernovae-st/tap/nika` —
+- If the binary is missing: `brew install nika-open/tap/nika` —
   do not reconstruct runs from memory.
 
 ## Completion

@@ -64,7 +64,7 @@ fi
 bin_ok=""
 command -v nika >/dev/null 2>&1 && bin_ok=1
 
-install_teach='Nika kit note: the nika binary is not on PATH. Every surface of this kit (MCP oracle · /nika: commands · hooks · subagents) invokes it and stays dead until it lands. Install: brew install supernovae-st/tap/nika (other paths: nika.sh) · then restart the session.'
+install_teach='Nika kit note: the nika binary is not on PATH. Every surface of this kit (MCP oracle · /nika: commands · hooks · subagents) invokes it and stays dead until it lands. Install: brew install nika-open/tap/nika (other paths: nika.sh) · then restart the session.'
 
 # The payload's cwd, when the envelope carries one. The value is then
 # stripped of control characters (POSIX allows a newline in a path):
