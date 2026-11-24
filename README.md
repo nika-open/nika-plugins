@@ -217,7 +217,7 @@ claude plugin marketplace add nika-open/nika-plugins
 claude plugin install nika@nika
 ```
 
-It loads the 4 skills, 3 subagents, 6 slash commands, 3 hooks and the oracle.
+It loads the 5 skills, 3 subagents, 9 slash commands, 3 hooks and the oracle.
 Open a new session to use them.
 
 ### Codex
@@ -290,7 +290,7 @@ anything is written. Replayed with `plugins@1.3.4` on 2026-09-10:
 ```
 ◇  Found 1 local plugin(s)
 │
-│  nika  4 skills, 6 cmds, 3 agents, 2 rules, mcp  Author, debug, operate and m…
+│  nika  5 skills, 9 cmds, 3 agents, 2 rules, mcp  Author, debug, operate and m…
 ```
 
 ### Everyone else
@@ -437,21 +437,23 @@ printf '%s\n' \
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="media/suite-dark.svg">
-    <img src="media/suite-light.svg" alt="One install adds the whole suite: 4 skills, 3 subagents, 6 commands, 3 hooks and the read-only oracle" width="100%">
+    <img src="media/suite-light.svg" alt="One install adds the whole suite: 5 skills, 3 subagents, 9 commands, 3 hooks and the read-only oracle" width="100%">
   </picture>
 </p>
 
 | Part | Name | What it does for your agent |
 |---|---|---|
-| **4 skills** | `nika-authoring` | writes, checks and repairs `.nika` files, loading only the language and validation references the task needs |
+| **5 skills** | `nika-authoring` | writes, checks and repairs `.nika` files, loading only the language and validation references the task needs |
 | | `nika-debugging` | works out what happened in a failed, paused or suspicious run, from its trace |
 | | `nika-operating` | readies a working workflow to run unattended: spend caps, permits, secrets, model changes, CI, trace export |
 | | `nika-migration` | turns existing scripts, CI jobs or prompt chains into workflows that behave the same |
+| | `nika-running` | runs, approves, resumes and schedules workflows for someone who should not have to read engine output |
 | **3 subagents** | `nika-author` | writes or repairs one workflow and returns it with its actual check result; it never starts the run |
 | | `nika-debugger` | separates the proven cause of a failed or paused run from guesses and hands back the recovery command; it never reruns anything |
 | | `nika-migrator` | ports existing automation to a checked workflow, with a parity report |
-| **6 slash commands** | `/nika:check` · `/nika:explain` · `/nika:compile` | audit a file · explain a workflow or an error code · start a workflow from an exact skeleton, or make a small edit |
+| **9 slash commands** | `/nika:check` · `/nika:explain` · `/nika:compile` | audit a file · explain a workflow or an error code · start a workflow from an exact skeleton, or make a small edit |
 | | `/nika:trace` · `/nika:permits` · `/nika:doctor` | read a run's record · write the tightest `permits:` block · diagnose this machine's Nika setup |
+| | `/nika:make` · `/nika:run` · `/nika:pending` | turn your own sentence into a checked workflow · run one the smooth way, with a plain verdict and one yes · list the runs waiting for an answer and resume the one you answer |
 | **3 hooks** | session context | in a workspace that uses Nika, each session starts with the map (tools, rules, where runs are recorded) and a warning if `nika` is missing or out of step |
 | | check on edit | audits every edit to a `.nika` file at once; the findings reach the agent (in Cursor, the hook log) and the edit is never blocked |
 | | run guard | a `nika run` has to pass `nika check` first; a refusal carries the findings, so the agent repairs and checks again |
@@ -612,7 +614,7 @@ Three mechanisms, each with its own scope:
 | `nika wire <client>` | one machine | the read-only oracle, added to that client's MCP settings |
 
 The [VS Code extension](https://github.com/nika-open/nika-vscode) is not a
-plugin, and it is frozen at 0.120 and not qualified with 0.124: in an editor,
+plugin, and it is frozen at 0.120 and not qualified with 0.125: in an editor,
 use `nika lsp` and the JSON Schema. On Cursor it points you to this plugin
 for the agent side.
 
@@ -723,7 +725,7 @@ the versions it was checked with, and gated against the released binary.
 | 🦋 | [nika](https://github.com/nika-open/nika) | The engine and CLI: write, check, run and verify AI workflows |
 | 📖 | [nika-docs](https://github.com/nika-open/nika-docs) | The documentation, live at [docs.nika.sh](https://docs.nika.sh) |
 | 📜 | [nika-spec](https://github.com/nika-open/nika-spec) | The language specification and the suite that proves an engine follows it |
-| 🧩 | [nika-vscode](https://github.com/nika-open/nika-vscode) | The editor extension, frozen at 0.120 and not qualified with 0.124: use `nika lsp` and the JSON Schema |
+| 🧩 | [nika-vscode](https://github.com/nika-open/nika-vscode) | The editor extension, frozen at 0.120 and not qualified with 0.125: use `nika lsp` and the JSON Schema |
 | 🟦 | [nika-client](https://github.com/nika-open/nika-client) | Run and verify workflows from TypeScript |
 | ✅ | [nika-action](https://github.com/nika-open/nika-action) | A GitHub Action that posts a `nika check` verdict on your pull requests |
 | 🚀 | [nika-actions-starter](https://github.com/nika-open/nika-actions-starter) | A ready template: workflows, editor setup and CI from the first push |

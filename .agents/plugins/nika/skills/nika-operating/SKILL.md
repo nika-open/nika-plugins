@@ -21,7 +21,7 @@ the engine/spec identity that produced the report.
 
 - `nika check <file>` estimates output-token cost BEFORE any token: `≤ $X`
   bounds that output estimate, not prompt/input cost or the entire invoice.
-  `≥ $X FLOOR` means at least one task is unbounded — fix
+  `est unbounded` means at least one task is uncapped or unpriced — fix
   the reason (a missing `max_tokens`, an uncataloged model, an
   expression fan-out). Before unattended use, state the exposure and
   applicable controls; unpriced compute must not be called a bounded USD cost.
@@ -220,6 +220,16 @@ A pin detects changes relative to the enrolled definitions. It does not
 prove those descriptions are truthful, the server is harmless, or an effect
 was delivered. Keep the intended permissions and review the actual result;
 re-pinning is a review decision, not an automatic fix for drift.
+
+A pin also records what each tool does, because `permits:` cannot see an
+effect that happens on the server: `nika mcp approve <server>
+--reads-private <tool> --sends-out <tool> --no-role <tool>`. A tool
+declared `private-read` or `egress` counts as that leg of the trifecta at
+`nika check`. A tool with no declared role is not judged by the TRIFECTA
+row, and the check says so in an `mcp-roles` hint. The role is the
+operator's statement, reviewed like `permits:`: never declare one for the
+user, ask which tools read private data and which send out. A changed
+definition drops the role, so re-approving asks for it again.
 
 ## Observability (the journal is exportable, not captive)
 

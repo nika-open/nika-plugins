@@ -26,9 +26,9 @@ runs, several ask).
    - **Findings** — one line each: `NIKA-XXXX · task <id> · <message>`,
      with the fix the diagnostic teaches. Unknown code? Run
      `nika explain NIKA-XXXX` and fold its teaching in.
-   - **Cost** — the ceiling (`≤ $X`) or the floor (`≥ $X FLOOR` — name
-     WHY it is unbounded: missing `max_tokens`, uncataloged model,
-     expression fan-out). This estimates OUTPUT tokens, not input billing
+   - **Cost** — the ceiling (`est out ≤$X`), or `est unbounded` with the
+     bounded portion and its `uncapped` or `unpriced` tasks (name WHY:
+     missing `max_tokens`, uncataloged model, expression fan-out). This estimates OUTPUT tokens, not input billing
      or the complete invoice. Metered caps may overshoot for calls already
      admitted. A local model is **unpriced, never free**.
    - **Native path** — `hints[]` rows with `kind: native-first`. Each

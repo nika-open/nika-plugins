@@ -5,6 +5,16 @@ Versions move together across all manifests (the mirror gate pins it).
 
 ## Unreleased
 
+The run guard no longer bricks the editor when the `nika` binary is
+missing from its PATH. Inside a Nika project (a `nika.yaml` or a `.nika/`
+store in the host's project directory, the hook's working directory or
+above) it still refuses every shell command. Elsewhere it lets commands
+through and warns once, `guard_off` with exit 1, until the binary has
+been found again; meanwhile no run is judged there. The shim still never
+reads the payload. Each refusal now names its own cause: a command the
+judge could not see no longer tells the person to restore a binary that
+is present, and a broken judge points at `nika doctor`.
+
 The schedule teaching links the `nika arm` reference
 (https://docs.nika.sh/reference/arm) and, for the project file, the
 nika.yaml reference: the « Projects and schedules » guide the operating
@@ -29,6 +39,25 @@ mock replaces the model only, so tools, writes and subprocesses stay real
 and a fetch still reaches its host, which `nika try` now names before the
 run. The language reference calls the `mock/text` refusal probe keyless
 for the same reason.
+
+For Claude Code only: the plugin plugs in the Nika language server
+(`.lsp.json`), adds `/nika:make` (a sentence becomes a checked file),
+`/nika:run` (a run under the spending cap asked once at install) and
+`/nika:pending` (the runs waiting for a person), a `nika-running` skill,
+session hooks that say what is waiting, a monitor for paused runs and six
+evaluations (`evals/`). A paused run is never answered for the person: the
+question is shown as written. The skills name each helper script by its
+full plugin path, teach one `nika` command per call (a chained line can be
+refused as a whole and a pipe hides exit 4), and the hook commands quote
+the plugin root so a path with a space still resolves.
+
+## 0.125.0 — 2026-11-24
+
+Lockstep on the engine wave.
+
+## 0.124.5 — 2026-11-20
+
+Lockstep on the engine wave.
 
 ## 0.124.4 — 2026-11-12
 

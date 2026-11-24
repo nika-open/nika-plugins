@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 130" role="img" aria-label="One Add installs the whole suite: 4 skills, 3 subagents, 6 commands, 3 hooks and the read-only oracle">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 130" role="img" aria-label="One Add installs the whole suite: 5 skills, 3 subagents, 9 commands, 3 hooks and the read-only oracle">
   <!-- The suite strip · same THEME contract as hero-dark.svg (the light twin
        swaps only the THEME block · scripts/media/derive-hero-light.py). The
        counts are gate-checked against the bundle (scripts/check-clients-
@@ -59,7 +59,7 @@
 
     <rect x="206" y="44" width="110" height="40" rx="8" fill="var(--chip-bg)" stroke="var(--chip-stroke)"/>
     <rect class="h1" x="206" y="44" width="110" height="40" rx="8" fill="none" stroke="var(--v-infer)" opacity="0"/>
-    <text class="mono cmd" x="224" y="70">4 skills</text>
+    <text class="mono cmd" x="224" y="70">5 skills</text>
     <text class="mono dim" x="261" y="108" text-anchor="middle">author→migrate</text>
 
     <rect x="338" y="44" width="138" height="40" rx="8" fill="var(--chip-bg)" stroke="var(--chip-stroke)"/>
@@ -69,7 +69,7 @@
 
     <rect x="498" y="44" width="129" height="40" rx="8" fill="var(--chip-bg)" stroke="var(--chip-stroke)"/>
     <rect class="h3" x="498" y="44" width="129" height="40" rx="8" fill="none" stroke="var(--v-invoke)" opacity="0"/>
-    <text class="mono cmd" x="516" y="70">6 commands</text>
+    <text class="mono cmd" x="516" y="70">9 commands</text>
     <text class="mono dim" x="562" y="108" text-anchor="middle">/nika:*</text>
 
     <rect x="649" y="44" width="101" height="40" rx="8" fill="var(--chip-bg)" stroke="var(--chip-stroke)"/>

@@ -34,7 +34,7 @@ Two facts we verified live so you don't have to:
 
 ## What loads (all verified via `grok inspect --json`)
 
-- the 4 skills · authoring · debugging · operating · migration
+- the 5 skills · authoring · debugging · operating · migration · running
 - the 6 `/nika:*` commands · check · explain · new · trace · permits · doctor
 - the 3 subagents · `nika:nika-author` · `nika:nika-debugger` · `nika:nika-migrator`
 - the hook file (session map · check-on-edit · guard-run · claude dialect,

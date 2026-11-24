@@ -1,0 +1,8 @@
+[
+  {
+    "name": "nika-waiting-runs",
+    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/pending-watch.sh",
+    "description": "Nika runs waiting for an answer",
+    "when": "on-skill-invoke:nika-running"
+  }
+]

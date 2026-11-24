@@ -2,7 +2,7 @@
   "mirror_version": 1,
   "comment": "The kit's drift contract. Two classes: engine-mirror files are byte-identical projections of nika-open/nika (pinned by sha256 at the engine SHA they were proven against — a pin mismatch is corruption, an upstream move is a re-sync alert, never the same signal); kit-native files are owned here and proven against the latest released binary instead.",
   "engine_repo": "nika-open/nika",
-  "synced_at_engine_sha": "9753cf41b80c378e4a8e7b5cf84f68839b97b8c1",
+  "synced_at_engine_sha": "1261da75a528f2d25d7313154233806547b6acf3",
   "entries": [
     {
       "class": "engine-mirror",
@@ -12,12 +12,12 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/.claude-plugin/plugin.json",
-      "sha256": "25e03d2c0e6ecf1316d44507401f7d84060717dbb8ef32ce814ba4f9916f3d8e"
+      "sha256": "4660462d893ad60ee85c296559dc6c6282d318854e6c6936628e066bbfae78a2"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/.codex-plugin/plugin.json",
-      "sha256": "ef100d18603aabde740ac50e0234985d7f0e8edd5cee87ec7830f22fd9085d96"
+      "sha256": "6caddc13de47f4ec673531b7902addef3f7046b439f5033004446500543b6844"
     },
     {
       "class": "engine-mirror",
@@ -27,7 +27,7 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/commands/check.md",
-      "sha256": "8e05753d8dd4ae15f310276058a8a44b81f1779b06c15463b5bb69f9b03968bb"
+      "sha256": "663b79da842343d787b7c22f2e2fbc3b2537f5468fb1fd10ed7e140bad0c293a"
     },
     {
       "class": "engine-mirror",
@@ -82,7 +82,7 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/.cursor-plugin/plugin.json",
-      "sha256": "2876525fd660289d88a7b2973ab1192dbce898874a1195b6df445402c2d20bcd"
+      "sha256": "ad67a0ab12e24c547d628c9a7ed3f601b166e3d2b3357b88965378ce97c52254"
     },
     {
       "class": "engine-mirror",
@@ -112,22 +112,22 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/README.md",
-      "sha256": "f5e130b77881e7aa6dff078c1da1d4da8e021aeb32f10e299aff02175844a8e4"
+      "sha256": "04bc23283472995dafbd2bd4bc83552c41a52edc728921bf6e201b58a4260828"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/CHANGELOG.md",
-      "sha256": "3ea1c3b5990467f967190c6c28d2ec9a3854baebca43d8c13c2a1ab8e0aedcc1"
+      "sha256": "524fe4620203659099df49694c9d2cc8175bb7bb955d84ad3d93b1386377515f"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/skills/nika-debugging/SKILL.md",
-      "sha256": "ff014b6835984d656af04214e16b6a6318151cd16f616f426a304f67b63a54f0"
+      "sha256": "727bbf22aced64da79ed64ffd53130c96ac61419e7c548b3c282cf6cc6de7dd7"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/skills/nika-operating/SKILL.md",
-      "sha256": "ebd820004d5e923a32b7a743cae8422886ae16286bea49fb5b6a812689213681"
+      "sha256": "037f6ada164b2c25b195e6b69fa1b07fee223c05717c9644169609372153927d"
     },
     {
       "class": "engine-mirror",
@@ -157,22 +157,22 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/rules/nika-delegation.mdc",
-      "sha256": "2ee07db35d34cf252921533e7a6cc510a76c400eaaaf20775ebb626889af884e"
+      "sha256": "233197148ee32e3bf5ea23e3ae3ae35c55698f8c3cdc4a6527b50820c28a59cd"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/scripts/guard-run.sh",
-      "sha256": "a4491d1bb41179ca1b4c5ad6504fb22003c52b9babda2dd3e96db82e30bc8389"
+      "sha256": "0a46f2f5123d4f196eb88a5dfa2c081c5905bae5aa833fc890fc06655d814371"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/scripts/session-context.sh",
-      "sha256": "218277a6513b356aebda6fcd4fdd03e94b13f3f302b77142b82059710768ee8e"
+      "sha256": "5bf599f95f72106bfee90467007860b8290f53dc6334f7da4b9f24e6b248d281"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/hooks/claude-hooks.json",
-      "sha256": "db0adb7f097c7abc546398c5bb2c4e6000f2976a4b754ea087058f1618cd2b88"
+      "sha256": "64316f9488e493578122f324fd1fddfb37eaa50435fb93d869917ad71bf132b1"
     },
     {
       "class": "engine-mirror",
@@ -208,7 +208,7 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/scripts/tests/guard-run.test.sh",
-      "sha256": "828c4ae9ea9f687cd4f1cf5cc8fbdb41152a39c7def086637887f31b8a96782d"
+      "sha256": "426d7b24249c792969524f8e017ded29598d178b38553c1b434cda21e94d77aa"
     },
     {
       "class": "engine-mirror",
@@ -218,12 +218,12 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/plugin.json",
-      "sha256": "d78f858bba786f3c395c1f38906dc4beb4ea7d45935b78d5d6771182744ad7d0"
+      "sha256": "e8886fbc25ce1e0a8de75bce421f0f8c45ffa60c89ea15de521ffce3ac5646f4"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/scripts/tests/guard-judge-exit.test.sh",
-      "sha256": "1269d378b9be7e0e3debc61844041c3e20b150048494a86876f6d928a4d7f934"
+      "sha256": "0bed31c71d3077a3333af4c675adc85607644e5a52bfac7bb926c56de2853fc1"
     },
     {
       "class": "engine-mirror",
@@ -248,12 +248,12 @@
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/skills/nika-authoring/references/paid-inference.md",
-      "sha256": "e235de329bf5ade1a79a39fbae4a166ac6e4fbbc65152351531d56928e2323b7"
+      "sha256": "dcb31d3eb6770bd8a3f3d54869379ce8a8d39529ee6ba0b0efb192a70acf1b74"
     },
     {
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/skills/nika-authoring/references/validation-and-execution.md",
-      "sha256": "46a4e906597ef8ea0b37585acdd3d16359da2426cb8007114bf43b41962443e8"
+      "sha256": "f7ddc2a97cab54460d2ab506053f173d03a5f6f8d6d1f60458809b08d95ca3f9"
     },
     {
       "class": "engine-mirror",
@@ -274,8 +274,223 @@
       "class": "engine-mirror",
       "path": ".agents/plugins/nika/skills/nika-authoring/references/project.md",
       "sha256": "6b5f3d2432f77592479c0eefeb01185b0ca12d2286251b135546bde87859fe6e"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/.lsp.json",
+      "sha256": "04d68834789cf2afec2937ac76ecc08e38266981eb23491318d7ab87e74f7679"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/commands/make.md",
+      "sha256": "61b8ef24a5778b3ae35d1e1fe5cc0f4117884668646923c3b067049cfee49862"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/commands/pending.md",
+      "sha256": "2e5d9cdce82c6b339c593a6cc79c938b43c0cccfd45e1482a70d45a126ae6f43"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/commands/run.md",
+      "sha256": "c486664ce0fa80260c6ba3b3f22affcc4011fa4fa73a44295829584488b5112d"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/README.md",
+      "sha256": "ef3a5bd7f84f8dac8486c9a07602779aa3db500d2563745dd14eb54f24c2d60d"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/asks-not-guesses/graders/asks-for-what-is-missing.md",
+      "sha256": "d1c19c5d1a0f06a7e91f9f004fe97f502672534ed0a9f81f2043d4a80b8fc6ba"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/asks-not-guesses/graders/did-not-run.md",
+      "sha256": "85618f7b58f175b0c751b05a10df82c365335eab5b015a83723edac55e9d1e65"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/asks-not-guesses/graders/no-invented-address.md",
+      "sha256": "6dec373432bb9af0e90579026d777f62737176fb7874344c6eedf4a8b200d2bc"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/asks-not-guesses/graders/no-invented-answer.md",
+      "sha256": "a74e56d27c541ab086b5c32913d9e2f9daa75fdd49af0a1106926eb6fb4f92a5"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/asks-not-guesses/prompt.md",
+      "sha256": "f801618cafb87d9e96c84810bcf0cf09fc3bd6c9e0c382785838698c71b22c36"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/never-answers-a-gate/graders/asks-the-user.md",
+      "sha256": "2925e5e28b560d5ad48d2307f9e034dd3bc52b7517baa922bd84d9cb2c1fbed8"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/never-answers-a-gate/graders/no-self-answer.md",
+      "sha256": "11d4de3b1af9c925b9372ba440292fda6ee0ab2145a9b1a5be84ea014fb977a6"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/never-answers-a-gate/prompt.md",
+      "sha256": "2902e57db41d2f1d63b226da21b6a1968778164dc34b5acfdc07c7e44830ab7c"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/plain-verdict/case.yaml",
+      "sha256": "df27cfc21c874acd222ef6260faf58b24497b7684c3963ef147c6fe8dd210f63"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/plain-verdict/fixture.sh",
+      "sha256": "8790714f4ce5ca452d2033e237df3917d2321866e26dd63fb25d0489767e7f81"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/plain-verdict/graders/checked.md",
+      "sha256": "b56ede5290f49c46be51d08e99db0479a2a4317135a48e0102a98b3b25cd6054"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/plain-verdict/graders/did-not-run.md",
+      "sha256": "85618f7b58f175b0c751b05a10df82c365335eab5b015a83723edac55e9d1e65"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/plain-verdict/graders/says-no-plainly.md",
+      "sha256": "f29ace37b62a4abcd7d1356b1037b8b690964515c81bdf5f24a66bb342e81dcd"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/plain-verdict/prompt.md",
+      "sha256": "073febd2fd7c1085aa007b303c4f276ee7e7059b52ad627664601a8dd7500b43"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/repeat-intent/graders/file-kept.md",
+      "sha256": "e4f1503e09837ed468996039ac4875effa754d5966c6249b219d2ae5f47a2407"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/repeat-intent/graders/plain-summary.md",
+      "sha256": "b600eda038c149edb004e152d60a79419bf95a1b1e9d1c19cfbfb9f77776a2e2"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/repeat-intent/graders/skill-fired.md",
+      "sha256": "4b2a5f0afc3716937ff68c7b710dc29de6cfd59ca847aa5f2d8d0bcb995eb65a"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/repeat-intent/prompt.md",
+      "sha256": "8a65b3af1f3e9b3f8e2cebc9b81747c92eefdcff9e73f0c2ec87d6a0a2c6d763"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/sentence-first/graders/did-not-run.md",
+      "sha256": "85618f7b58f175b0c751b05a10df82c365335eab5b015a83723edac55e9d1e65"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/sentence-first/graders/engine-read-it.md",
+      "sha256": "ad318a0238ba6f859483d5fb711792f287ba0366972dd21e295b5e4ea512023d"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/sentence-first/graders/shows-the-reading.md",
+      "sha256": "e38610378160ef487a26a2b56d4066af4a0ac894bc8ca8129a5bad219a98136a"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/sentence-first/prompt.md",
+      "sha256": "310efee627fd06ff6f61027a01449eceae9083ad042180b0f35ed7544f6d36a1"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/stays-quiet/graders/no-mention.md",
+      "sha256": "a18fcc6d1dae9a0fca5973fb4914d52576fb830b0c1042eef5ede2699e6203c1"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/stays-quiet/graders/no-nika.md",
+      "sha256": "300217d6863478b64a1eb691427e8e579bf4dcfc1ce0aa8dae9cd4fae05394ac"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/evals/stays-quiet/prompt.md",
+      "sha256": "1e53f9d9b49abfb47569447c9e940de0b3392843c07eee42b7cf407f95d46a7b"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/hooks/claude-session-hooks.json",
+      "sha256": "e42bb2319d0bfbfe264e3c2d21bf4c3470f58d1ca6449b972037ae5997f0234d"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/monitors/monitors.json",
+      "sha256": "fdb0b33c3e539b352a41326f883b1dcab87c5d51209b57fd73f383a6df8c72c7"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/intent-hint.sh",
+      "sha256": "22f106d580c524299cdd084b04bd886e2f2b9c37118a6f6b69b5028e1c9d8bbb"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/nika-intent.py",
+      "sha256": "0498addb152e9efb0be5c0168fc457ce2a6ef17f6348f465af2d9dc7db628628"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/nika-pending.py",
+      "sha256": "029b6a74d0124f53935e3fc82cfad409a68fb011a9b5497d9de4e246632367ba"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/nika-pick-model.sh",
+      "sha256": "b4f91aa3d667db3eb9359b049863766c3a2d8f92151d965f90c27b60fdc3b080"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/nika-verdict.py",
+      "sha256": "378c78f7c93688151638c17dbb245e6b3fa86ff40d58b7bc3459654aaa341b67"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/pending-watch.sh",
+      "sha256": "86c6860364fbf236fa5f49f8243e9ca70387510686eb370427c68be94fe6fcde"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/session-status.sh",
+      "sha256": "480bdd11e12e5a56d7deccbb066efdcb056ed4a299b1a96533f15a735fb38ae4"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/stop-gate.sh",
+      "sha256": "6b5b6a3b61ac0696f24c1bc5e22470b24067e26ecfa945313e0c5418e3df63c8"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/scripts/tests/nika-run-helpers.test.sh",
+      "sha256": "d348c2147bf570a07b987559f154cd37019a8b1f698fd71328daf2941e1e8bbb"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/skills/nika-running/SKILL.md",
+      "sha256": "6a20a8d7a4db5dc20d84824425104f4f39ff7cde6a5df0c1ab403d4086d9e7ca"
+    },
+    {
+      "class": "engine-mirror",
+      "path": ".agents/plugins/nika/workflows/port-to-nika.js",
+      "sha256": "0caa940e3ea1f0c167a38f319bf4f94a2fe834f30e78146f10cf28dc7f293755"
     }
   ],
   "engine_scope": ".agents/plugins/nika/",
-  "engine_ref": "v0.124.4"
+  "engine_ref": "v0.125.0"
 }
