@@ -67,7 +67,7 @@ an anchor substring check does not establish that extracted facts are true.
 7. **Would a closer template have given this graph?** `nika compile --list`
    lists exact skeletons. Preview a named skeleton; unsupported prose stays incomplete. Adapt only when it materially improves the requested result;
    preserve working content and avoid restarting for stylistic conformity.
-8. **Did `nika explain <file>` stay honest?** Waves · cost (FLOOR ≠ $0)
+8. **Did `nika explain <file>` stay honest?** Waves · cost (an unbounded cost is not $0)
    · touches · the **before a paid model** panel. If a paid-run hint
    remains, the file is not done.
 9. **Is the law proven on known answers?** Hint `unproven-law`. A
