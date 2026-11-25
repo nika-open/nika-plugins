@@ -52,26 +52,50 @@ case "$file" in
   *) done_quiet ;;
 esac
 
-# The oracle order (F14 · 2026-07-30). NIKA_BIN wins when set — the
-# seatbelt judges with the binary the WORK targets, not only whatever the
-# PATH serves. Proven need 2026-07-27: the E-split window, where every
-# ratified-grammar file on this machine drew a cry from the PATH's 0.105
-# while engine main already spoke the new forms. When NIKA_BIN is unset
-# AND the edited file lives in a tree that builds its own nika, the
-# tree's build IS the binary the work targets — the hook judges with it
-# by default, because the PATH binary can lag the tree (the wrong-judge
-# class: a green from the release the tree is in the middle of fixing).
-# Everywhere else falls back to the PATH's nika. Same capability-honesty:
-# an unset or broken NIKA_BIN and a missing binary fall back to silence,
-# never to a failure.
+# The oracle order. NIKA_BIN wins when set: the seatbelt judges with the
+# binary the WORK targets, not only whatever the PATH serves. Proven need
+# 2026-07-27: the E-split window, where every ratified-grammar file on this
+# machine drew a cry from the PATH's 0.105 while engine main already spoke
+# the new forms.
+#
+# A project never chooses the judge. This hook runs on its own after every
+# edit, in any repository the editor opens, so nothing the repository holds
+# is ever run: a build under the tree's own `target/` is not picked, engine
+# tree included. Inside the engine tree (the tree holds `crates/nika-cli`),
+# a session that points CARGO_TARGET_DIR at an absolute folder outside the
+# tree (one build folder per lane) is judged by that folder's build: the
+# session chose it, the repository did not. Elsewhere that folder may hold
+# another project's build and is not looked at. Everything else falls back
+# to the PATH's nika; to judge with another build, name it with NIKA_BIN in
+# the environment the client gives its hooks. Same capability-honesty: an
+# unset or broken NIKA_BIN and a missing binary fall back to silence, never
+# to a failure.
 NIKA="${NIKA_BIN:-}"
-if [ -z "$NIKA" ]; then
-  root="$(git -C "$(dirname "$file")" rev-parse --show-toplevel 2>/dev/null || true)"
-  if [ -n "$root" ] && [ -x "$root/target/debug/nika" ]; then
-    NIKA="$root/target/debug/nika"
-  else
-    NIKA="nika"
-  fi
+kit="$(cd "$(dirname "$0")" 2>/dev/null && pwd)/../bin/nika-kit"
+if [ -x "$kit" ]; then
+  # Inside the plugin, every helper asks the one resolver, which applies the
+  # order written above. A copy of this hook that `nika init` wrote into a
+  # project has no resolver beside it and applies the same order itself.
+  NIKA="$("$kit" --path "$(dirname "$file")" 2>/dev/null || true)"
+  [ -n "$NIKA" ] || NIKA="${NIKA_BIN:-nika}"
+elif [ -z "$NIKA" ]; then
+  NIKA="nika"
+  case "${CARGO_TARGET_DIR:-}" in
+    /*)
+      root="$(git -C "$(dirname "$file")" rev-parse --show-toplevel 2>/dev/null || true)"
+      if [ -n "$root" ] && [ -f "$root/crates/nika-cli/Cargo.toml" ] \
+        && [ -f "$CARGO_TARGET_DIR/debug/nika" ] && [ -x "$CARGO_TARGET_DIR/debug/nika" ]; then
+        build="$(cd "$CARGO_TARGET_DIR/debug" 2>/dev/null && pwd -P || true)"
+        tree="$(cd "$root" 2>/dev/null && pwd -P || true)"
+        if [ -n "$build" ] && [ -n "$tree" ]; then
+          case "$build/" in
+            "$tree"/*) ;;
+            *) NIKA="$CARGO_TARGET_DIR/debug/nika" ;;
+          esac
+        fi
+      fi
+      ;;
+  esac
 fi
 
 if [ ! -f "$file" ] || ! command -v "$NIKA" >/dev/null 2>&1; then
@@ -175,16 +199,19 @@ printf '%s\n' "$findings" | head -c 2000 >&2
 # Name the FLAG, not just the verb. A reader told to "re-run nika check"
 # runs the bare form, reads a green that this hook does not accept, and
 # loops against a gate it cannot see.
+#
+# Every path inside the command is shell-quoted (%q): a folder or file name
+# comes from the project, and the reader is told to run the line.
 if [ "$kind" = project ]; then
-  printf '\nre-check with the same oracle this hook used (activate a beat only once it reads READY):\n  cd %s && %s check nika.yaml && %s arm --json\n' \
+  printf '\nre-check with the same oracle this hook used (activate a beat only once it reads READY):\n  cd %q && %q check nika.yaml && %q arm --json\n' \
     "$project_dir" "$oracle" "$oracle" >&2
   printf 'the beat, its zone and its activation: https://docs.nika.sh/reference/arm\n' >&2
 else
-  printf '\nre-check with the same oracle this hook used:\n  %s check --native-strict %s\n' "$oracle" "$file" >&2
+  printf '\nre-check with the same oracle this hook used:\n  %q check --native-strict %q\n' "$oracle" "$file" >&2
 fi
 printf 'oracle: %s (tag %s · a tag does not say what the build contains)\n' \
   "$oracle" "${tag:-unknown}" >&2
-printf 'inside the engine tree the hook prefers the tree build by default (F14) — override:\n  export NIKA_BIN=<path-to-nika>\n' >&2
+printf 'the judge: NIKA_BIN when set, else inside the engine tree the session build under CARGO_TARGET_DIR (an absolute folder outside the tree), else the PATH; a build inside a project is never picked. To name another, set NIKA_BIN=<path-to-nika> where the client starts its hooks\n' >&2
 if [ -n "$cc" ]; then
   # PostToolUse exit 2 = stderr fed to Claude, edit already applied.
   exit 2

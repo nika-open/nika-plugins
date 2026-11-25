@@ -1,0 +1,8 @@
+{
+  "nika": {
+    "command": "nika",
+    "args": ["lsp"],
+    "extensionToLanguage": { ".nika": "yaml" },
+    "startupTimeout": 5000
+  }
+}

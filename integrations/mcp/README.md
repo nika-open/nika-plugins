@@ -18,7 +18,7 @@ mcp_servers:
 { "mcpServers": { "nika": { "command": "nika", "args": ["mcp"] } } }
 ```
 
-`nika wire <client>` writes the stanza for you where supported — at 0.124.0
+`nika wire <client>` writes the stanza for you where supported — at 0.125.1
 the targets are cursor · vscode · windsurf · claude · claude-desktop · cline
 · codex · continue · zed · opencode · hermes · gemini · qwen · lmstudio ·
 junie · grok · antigravity · kimi · kiro · copilot · amp. `nika wire
@@ -89,12 +89,13 @@ list):
 | `nika_catalog` | provider/model ids · capabilities · required env vars |
 | `nika_tools` | the builtins an `invoke` reaches without any MCP server |
 
-At 0.124.0, `initialize` advertises the `tools` and `prompts` capabilities.
-`prompts/list` serves five prompts, `check`, `explain`, `compile`, `trace` and
-`permits`, the same jobs as five of the plugin's six `/nika:*` commands. The
-sixth, `/nika:doctor`, and the skills, subagents and hooks come only from the
-plugin manifests, in the clients that read one. Wire the oracle for
-validation; install the plugin for the rest. Probe it yourself in one line:
+At 0.125.1, `initialize` advertises the `tools` and `prompts` capabilities.
+`prompts/list` serves seven prompts, `check`, `explain`, `compile`, `trace`,
+`permits`, `ideas` and `capture`, the same jobs as the plugin's `/nika:*`
+commands of those names. The other commands, the skills, subagents and hooks
+come only from the plugin manifests, in the clients that read one. Wire the
+oracle for validation; install the plugin for the rest. Probe it yourself in
+one line:
 
 ```sh
 printf '%s\n' \

@@ -9,6 +9,15 @@ A workflow makes its inputs, effects and execution evidence inspectable.
 Migration re-declares the intent so the checker can see it; a clean check
 does not authorize effects or prove that the migrated behavior is correct.
 
+**What needs the person, and what never does.** Their yes is needed to run
+the port against real data or real destinations, to add an effect the source
+did not have, to choose a paid model route, to answer a gate and to retire
+the source. Reading the source and its callers, writing the port beside it,
+checking it, rehearsing on the mock model a port that sends nothing and
+pins no model on a task (a pinned model is called for real even under
+`--model mock/echo`: such a port is read with `--dry-run`) and comparing
+outputs on fixtures never wait for them.
+
 ## When to migrate (and when not to)
 
 Migrate when the automation: calls an LLM anywhere · chains

@@ -40,7 +40,8 @@ separate host decision; an offline model does not bypass it.
    (providers · models · capabilities · which env var each needs) and
    `nika catalog --tools` (the `nika:*` builtins an `invoke` reaches
    without MCP); before a run, `nika inspect <file>` shows the anatomy:
-   tasks · waves · the cost floor.
+   tasks · waves · the output-cost ceiling (`est out ≤$…`), or
+   `est unbounded` when a task has no token bound or no price.
 3. **Check it**: `nika check <file>` (exit 0 = clean · 2 = findings),
    then `nika check --native-strict <file>` — it fails on any
    `native-first` hint (an `exec:` a builtin covers).
@@ -98,10 +99,13 @@ separate host decision; an offline model does not bypass it.
 
 ## Cost honesty (never hide unknown spend)
 
-- `nika check` prints the cost ceiling BEFORE any token: `≤ $X` is a
-  ceiling · `≥ $X FLOOR` means at least one task is unbounded — name
-  the reason (a missing `max_tokens`, an uncataloged model, an
-  expression fan-out), never round it to $0.
+- `nika check` prints the cost BEFORE any token. When every task is
+  bounded, the COST line reads `$X – $Y worst-case output ceiling` and
+  the verdict line `est out ≤$Y`. When one is not, the COST line reads
+  `bounded portion $X no total ceiling` with the count of `uncapped`
+  tasks (a missing `max_tokens`, an expression fan-out) or `unpriced`
+  tasks (a model with no catalog price), and the verdict line reads
+  `est unbounded`. Name the reason; never round it to $0.
 - **The ceiling covers OUTPUT tokens only. The prompt is not in it.**
   `max_tokens` is the max OUTPUT tokens, and that is what the sum
   prices; `input_per_million` has no reader in the checker. Measured
@@ -115,15 +119,15 @@ separate host decision; an offline model does not bypass it.
   document.)
 - A local model (`ollama/…`) is **unpriced compute, not « free »** —
   say "unpriced", never "$0" or "free".
-- **A `FLOOR` on a CLOUD model is not a cheap model, it is a missing
-  price row, and the short catalog id is often the reason.** Measured
-  2026-07-28: `mistral/small` (the id `nika catalog` prints) reports
-  `$0.0000 FLOOR · no catalog price (local/unknown model)` while
-  `mistral/mistral-small-latest`, the same model, reports a
-  `$0.0024 worst-case output ceiling`. The wording says "local/unknown" about
-  a cataloged cloud model. Try the full model string before believing a
-  cloud floor; if it still floors, hand the human the word "unpriced"
-  and never a number.
+- **An `unpriced` CLOUD model is not a cheap model, it is a missing
+  price row, and a short model id is often the reason.** Measured
+  2026-11-23 on 0.124.5: `mistral/small` with `max_tokens: 200` reports
+  `bounded portion $0.0000 no total ceiling · 1 unpriced task` and « no
+  dollar meter for a local/unknown model », while
+  `mistral/mistral-small-latest`, the id `nika catalog` prints, reports
+  a `$0.0001 – $0.0001 worst-case output ceiling`. Use the id the catalog
+  prints before believing a cloud model is unpriced; if it stays
+  unpriced, hand the human the word "unpriced" and never a number.
 - A spend cap rides the run: `nika run <file> --max-cost-usd <n>`
   refuses a known over-budget floor before execution. During execution,
   crossing the metered budget stops new admissions; already-started calls
