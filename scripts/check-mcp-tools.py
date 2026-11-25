@@ -7,8 +7,14 @@
 # tool would leave the marketplace lying. This asserts (a) the README's
 # `nika_*` names are exactly the tools `nika mcp` exposes over the wire, and
 # (b) every kit-native .md registered in mirror.json only advertises tool
-# names the wire serves (subset — a pack may list fewer, never a phantom).
-# Runs in CI after the pinned nika is installed; also runnable locally:
+# names the wire serves (subset — a pack may list fewer, never a phantom),
+# and (c) each integration page that describes the wire states, wherever
+# its prose counts tools or prompts, the counts the wire serves, and its
+# `prompts/list` sentences name exactly the prompts the wire serves (earned
+# 2026-11-25: three pages said "seven prompts" by hand and nothing compared
+# them with the binary). A page with no readable count of either is refused
+# too, so a rewording cannot turn the check off.
+# Runs in CI after the latest released nika is installed; also runnable locally:
 # NIKA_BIN=/path/to/nika python3 scripts/check-mcp-tools.py
 #
 # Exit 0 = surfaces ⟺ binary agree. Exit 1 = drift (names printed).
@@ -61,17 +67,21 @@ def kit_native_md_tools() -> dict:
     return out
 
 
-def served_tools(nika: str) -> set:
-    """The tool names `nika mcp` actually exposes (JSON-RPC tools/list)."""
+def wire_listing(nika: str) -> tuple[set, set]:
+    """The tool and prompt names `nika mcp` actually exposes (JSON-RPC
+    tools/list and prompts/list). A binary that does not advertise the
+    prompts capability serves no prompts."""
     handshake = "\n".join(json.dumps(m) for m in [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize",
          "params": {"protocolVersion": "2025-06-18", "capabilities": {},
                     "clientInfo": {"name": "gate", "version": "1"}}},
         {"jsonrpc": "2.0", "method": "notifications/initialized"},
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+        {"jsonrpc": "2.0", "id": 3, "method": "prompts/list", "params": {}},
     ]) + "\n"
     out = subprocess.run([nika, "mcp"], input=handshake, text=True,
                          capture_output=True, timeout=30)
+    replies = {}
     for line in out.stdout.splitlines():
         line = line.strip()
         if not line:
@@ -80,10 +90,105 @@ def served_tools(nika: str) -> set:
             msg = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if msg.get("id") == 2 and "result" in msg:
-            return {t["name"] for t in msg["result"].get("tools", [])}
-    raise SystemExit("check-mcp-tools: no tools/list reply from `nika mcp` "
-                     f"(stderr: {out.stderr.strip()[:160]})")
+        # a reply carries no `method`; a server request reusing an id is not one
+        if "method" not in msg and msg.get("id") in (1, 2, 3):
+            replies[msg["id"]] = msg
+    stderr = out.stderr.strip()[:160]
+    for rid, method in ((1, "initialize"), (2, "tools/list")):
+        if "result" not in replies.get(rid, {}):
+            raise SystemExit(f"check-mcp-tools: no {method} result from `nika mcp` "
+                             f"(error: {replies.get(rid, {}).get('error')}, stderr: {stderr})")
+    tools = {t["name"] for t in replies[2]["result"].get("tools", [])}
+    prompts = set()
+    if "prompts" in replies[1]["result"].get("capabilities", {}):
+        if "result" not in replies.get(3, {}):
+            raise SystemExit("check-mcp-tools: `nika mcp` advertises prompts but gave no "
+                             f"prompts/list result (error: {replies.get(3, {}).get('error')}, "
+                             f"stderr: {stderr})")
+        prompts = {p["name"] for p in replies[3]["result"].get("prompts", [])}
+    return tools, prompts
+
+
+# The pages that describe what the oracle serves over the wire, in prose.
+LISTING_PAGES = [
+    "integrations/mcp/README.md",
+    "integrations/openclaude/README.md",
+    "integrations/opencode/README.md",
+]
+NUMBER_WORDS = {w: i for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve "
+    "thirteen fourteen fifteen sixteen".split())}
+COUNT_RE = {
+    "tools": re.compile(r"\b(\d+|[a-z]+)\s+(?:`nika_\*`\s+)?tools\b", re.I),
+    "prompts": re.compile(r"\b(\d+|[a-z]+)\s+prompts\b", re.I),
+}
+TICKED_RE = re.compile(r"`([^`]+)`")
+
+
+def sentences(text: str) -> list[str]:
+    """Paragraph-joined sentences, outside fenced code blocks."""
+    prose = re.sub(r"```.*?```", "", text, flags=re.S)
+    out = []
+    for para in re.split(r"\n\s*\n", prose):
+        out += re.split(r"(?<!e\.g\.)(?<!i\.e\.)(?<=[.!?])\s+", " ".join(para.split()))
+    return out
+
+
+def count_claims(text: str, kind: str) -> list[tuple[str, int]]:
+    """Every count of `kind` the prose states, as digits or a number word,
+    with its sentence. A word that is not a number ("the tools") states none."""
+    claims = []
+    for sentence in sentences(text):
+        for m in COUNT_RE[kind].finditer(sentence):
+            word = m.group(1).lower()
+            if word.isdigit():
+                claims.append((sentence, int(word)))
+            elif word in NUMBER_WORDS:
+                claims.append((sentence, NUMBER_WORDS[word]))
+    return claims
+
+
+def prompt_name_claims(text: str) -> list[tuple[str, set]]:
+    """Every sentence naming `prompts/list` with the backticked names it lists."""
+    claims = []
+    for sentence in sentences(text):
+        if "`prompts/list`" not in sentence:
+            continue
+        names = {t for t in TICKED_RE.findall(sentence)
+                 if "/" not in t and not t.startswith("nika_") and "*" not in t}
+        if names:
+            claims.append((sentence, names))
+    return claims
+
+
+def check_listing_pages(tools: set, prompts: set) -> bool:
+    failed = False
+    for rel in LISTING_PAGES:
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        page_failed = False
+        for kind, wire in (("tools", tools), ("prompts", prompts)):
+            claims = count_claims(text, kind)
+            if not claims:
+                page_failed = True
+                print(f"✗ {rel}: states no readable count of {kind} — say how many "
+                      f"`{kind}/list` serves, in digits or a number word", file=sys.stderr)
+            for sentence, count in claims:
+                if count != len(wire):
+                    page_failed = True
+                    print(f"✗ {rel}: says {count} {kind}, the wire serves {len(wire)}: "
+                          f"{sentence[:120]}", file=sys.stderr)
+        for sentence, names in prompt_name_claims(text):
+            if names != prompts:
+                page_failed = True
+                print(f"✗ {rel}: names prompts {sorted(names)}, the wire serves "
+                      f"{sorted(prompts)}: {sentence[:120]}", file=sys.stderr)
+        if page_failed:
+            failed = True
+        else:
+            print(f"✓ {rel} · {len(count_claims(text, 'tools'))} tool and "
+                  f"{len(count_claims(text, 'prompts'))} prompt counts match the wire "
+                  f"({len(tools)} tools, {len(prompts)} prompts)")
+    return failed
 
 
 def main() -> int:
@@ -92,8 +197,8 @@ def main() -> int:
         print("check-mcp-tools: nika not on PATH — install it first", file=sys.stderr)
         return 1
     documented = documented_tools()
-    served = served_tools(nika)
-    failed = False
+    served, prompts = wire_listing(nika)
+    failed = check_listing_pages(served, prompts)
     if documented == served:
         print(f"✓ README ⟺ nika mcp agree · {len(served)} tools: "
               f"{' · '.join(sorted(served))}")

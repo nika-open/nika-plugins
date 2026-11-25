@@ -156,6 +156,8 @@ jobs:
         run: |
           python3 scripts/tests/resync-mirror.test.py
           python3 scripts/tests/skill-commands.test.py
+      - name: The integration pages state what the oracle serves (the law, no binary)
+        run: python3 scripts/tests/mcp-listing.test.py
       # mirror.json is the drift CONTRACT (two classes):
       #   engine-mirror — byte-identical projection of nika-open/nika,
       #     pinned by sha256 at the engine SHA it was proven against.

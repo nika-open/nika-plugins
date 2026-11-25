@@ -86,7 +86,7 @@ folder is written to their shape and validator rules, ready for the
 submission described in [`SUBMISSION.md`](SUBMISSION.md).
 
 Size it honestly before spending the gesture: at the 2026-07-28 read the
-hub carried 10 skills, 11 stars, and no push since 2026-05-27. The plugin
+hub carried ten skills, eleven stars, and no push since 2026-05-27. The plugin
 path above reaches far more users; the hub is a discovery surface, not the
 distribution.
 
