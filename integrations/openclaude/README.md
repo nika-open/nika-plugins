@@ -32,9 +32,9 @@ openclaude plugin install nika@nika
 openclaude plugin marketplace update nika   # later: pull a new kit version
 ```
 
-One Add gets the whole bundle: 4 skills (author · debug · operate ·
-migrate), 3 subagents, 6 commands, the delegation rule, the three seatbelt
-hooks and the read-only MCP oracle.
+One Add gets the whole bundle: 5 skills (author · debug · operate ·
+migrate · run), 5 subagents, 14 commands, the delegation rule, the three
+seatbelt hooks and the read-only MCP oracle.
 
 **Honest status — read before quoting this.** The lines above are derived
 from their published source, not from a live install on this machine. The
@@ -43,12 +43,12 @@ sees `nika` listed under `plugin marketplace list` has PROVEN it, and this
 paragraph becomes a date and a version instead of a caveat.
 
 What the bundle's two halves each carry is worth knowing before you debug a
-missing piece — and this part IS probed, against `nika mcp` 0.124.0. The
-oracle serves nine `nika_*` tools over `tools/list` and five prompts over
-`prompts/list` (`check`, `explain`, `compile`, `trace`, `permits`). The sixth
-command, `/nika:doctor`, and the skills, subagents and hooks are read from the
-plugin manifest, never from MCP — a client that loaded the MCP stanza alone
-gets validation and those five prompts, nothing more.
+missing piece — and this part IS probed, against `nika mcp` 0.125.1. The
+oracle serves nine `nika_*` tools over `tools/list` and seven prompts over
+`prompts/list` (`check`, `explain`, `compile`, `trace`, `permits`, `ideas`,
+`capture`). The other commands, the skills, subagents and hooks are read from
+the plugin manifest, never from MCP — a client that loaded the MCP stanza
+alone gets validation and those seven prompts, nothing more.
 
 ## The project scaffold — works with no plugin at all
 
@@ -92,7 +92,7 @@ distribution.
 
 ## The open probe
 
-`nika wire <client>` has no `openclaude` target (0.124.0). Where OpenClaude
+`nika wire <client>` has no `openclaude` target (0.125.1). Where OpenClaude
 expects a user-level MCP server stanza to live (inside `~/.openclaude.json`,
 or a project file) was not settled by this read; until someone confirms it,
 add the stanza from [`../mcp/README.md`](../mcp/README.md) by hand.

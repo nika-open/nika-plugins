@@ -32,15 +32,25 @@ Two facts we verified live so you don't have to:
   `~/.grok/installed-plugins/`, on a machine that also carries the Claude
   Code install.
 
-## What loads (all verified via `grok inspect --json`)
+## What loads
 
-- the 4 skills · authoring · debugging · operating · migration
-- the 6 `/nika:*` commands · check · explain · new · trace · permits · doctor
-- the 3 subagents · `nika:nika-author` · `nika:nika-debugger` · `nika:nika-migrator`
-- the hook file (session map · check-on-edit · guard-run · claude dialect,
-  registered as a unit)
+Grok Build reads the Claude Code layout, so it is offered the same bundle.
+At 0.125.1 that bundle carries:
+
+- the 5 skills · authoring · debugging · operating · migration · running
+- the 14 `/nika:*` commands · check · explain · compile · trace · permits ·
+  doctor · make · run · pending · ideas · capture · report · improve · connect
+- the 5 subagents · `nika:nika-author` · `nika:nika-reviewer` ·
+  `nika:nika-scout` · `nika:nika-debugger` · `nika:nika-migrator`
+- the hook files the Claude Code manifest names (session map · check-on-edit ·
+  guard-run · claude dialect, and the session hooks)
 - the read-only MCP oracle · 9 tools · no execution by design
   ([threat model](../mcp/THREAT-MODEL.md))
+
+On 2026-07-30 (kit 0.106.0), `grok inspect --json` listed every skill,
+command and subagent the bundle had then, the hook file registered as a unit,
+and the oracle. What the bundle gained since then has not been inspected in
+Grok yet.
 
 ## The deterministic checks (no model call · CI-able)
 

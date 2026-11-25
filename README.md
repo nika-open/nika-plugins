@@ -217,8 +217,9 @@ claude plugin marketplace add nika-open/nika-plugins
 claude plugin install nika@nika
 ```
 
-It loads the 4 skills, 3 subagents, 6 slash commands, 3 hooks and the oracle.
-Open a new session to use them.
+It loads the 5 skills, 5 subagents, 14 slash commands, 3 hooks and the oracle,
+plus the parts written for Claude Code: the session hooks, the monitors and the
+language server settings. Open a new session to use them.
 
 ### Codex
 
@@ -285,12 +286,13 @@ it in the repository. VS Code reads only the portable part of the bundle,
 the skills and the oracle, once its `chat.plugins.enabled` setting is on.
 
 `npx plugins discover nika-open/nika-plugins` shows what it found before
-anything is written. Replayed with `plugins@1.3.4` on 2026-09-10:
+anything is written. Below is the line `plugins@1.3.4` printed on 2026-09-10,
+with the counts brought to the 0.125.1 bundle (not replayed since):
 
 ```
 ◇  Found 1 local plugin(s)
 │
-│  nika  4 skills, 6 cmds, 3 agents, 2 rules, mcp  Author, debug, operate and m…
+│  nika  5 skills, 14 cmds, 5 agents, 2 rules, mcp  Author, debug, operate and m…
 ```
 
 ### Everyone else
@@ -437,24 +439,31 @@ printf '%s\n' \
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="media/suite-dark.svg">
-    <img src="media/suite-light.svg" alt="One install adds the whole suite: 4 skills, 3 subagents, 6 commands, 3 hooks and the read-only oracle" width="100%">
+    <img src="media/suite-light.svg" alt="One install adds the whole suite: 5 skills, 5 subagents, 14 commands, 3 hooks and the read-only oracle" width="100%">
   </picture>
 </p>
 
 | Part | Name | What it does for your agent |
 |---|---|---|
-| **4 skills** | `nika-authoring` | writes, checks and repairs `.nika` files, loading only the language and validation references the task needs |
+| **5 skills** | `nika-authoring` | writes, checks and repairs `.nika` files, loading only the language and validation references the task needs |
 | | `nika-debugging` | works out what happened in a failed, paused or suspicious run, from its trace |
 | | `nika-operating` | readies a working workflow to run unattended: spend caps, permits, secrets, model changes, CI, trace export |
 | | `nika-migration` | turns existing scripts, CI jobs or prompt chains into workflows that behave the same |
-| **3 subagents** | `nika-author` | writes or repairs one workflow and returns it with its actual check result; it never starts the run |
+| | `nika-running` | runs, approves, resumes and schedules workflows for someone who should not have to read engine output |
+| **5 subagents** | `nika-author` | writes or repairs one workflow and returns it with its actual check result; it never starts the run |
+| | `nika-reviewer` | judges a finished workflow cold, from the request and the file alone, and returns a verdict; it edits nothing |
+| | `nika-scout` | gathers the facts a design needs (the project's files, existing workflows, the catalog, what a past run did) on a small, fast model; it writes nothing |
 | | `nika-debugger` | separates the proven cause of a failed or paused run from guesses and hands back the recovery command; it never reruns anything |
 | | `nika-migrator` | ports existing automation to a checked workflow, with a parity report |
-| **6 slash commands** | `/nika:check` · `/nika:explain` · `/nika:compile` | audit a file · explain a workflow or an error code · start a workflow from an exact skeleton, or make a small edit |
+| **14 slash commands** | `/nika:check` · `/nika:explain` · `/nika:compile` | audit a file · explain a workflow or an error code · start a workflow from an exact skeleton, or make a small edit |
 | | `/nika:trace` · `/nika:permits` · `/nika:doctor` | read a run's record · write the tightest `permits:` block · diagnose this machine's Nika setup |
+| | `/nika:make` · `/nika:run` · `/nika:pending` | turn your own sentence into a checked workflow, with the plan approved once · run one with a plain verdict and one yes that carries its spending cap · list the runs waiting for an answer and resume the one you answer |
+| | `/nika:ideas` · `/nika:capture` · `/nika:connect` | propose workflows that fit this project, writing nothing until you pick one · turn the work just done in the conversation into a checked workflow, without running it · give a workflow a tool it lacks: find the MCP server, write its declaration and permits, then check |
+| | `/nika:report` · `/nika:improve` | build a page a person can read from a run's record · propose what the recorded runs prove could be better, one change at a time |
 | **3 hooks** | session context | in a workspace that uses Nika, each session starts with the map (tools, rules, where runs are recorded) and a warning if `nika` is missing or out of step |
 | | check on edit | audits every edit to a `.nika` file at once; the findings reach the agent (in Cursor, the hook log) and the edit is never blocked |
 | | run guard | a `nika run` has to pass `nika check` first; a refusal carries the findings, so the agent repairs and checks again |
+| **For Claude Code** | session hooks · monitors · language server | a missing binary or a run waiting for an answer is said at session start, a changed `.nika` file that fails its check sends the agent back, a run followed in an interactive session reports a wait or a failed task as it happens, and the check's findings arrive after each edit |
 | **2 rules** (Cursor) | language · delegation | the four verbs (`infer` · `exec` · `invoke` · `agent`) on `*.nika` files · when to propose a workflow, and which skill to use |
 | **The oracle** | `nika mcp` | `nika_check` · `nika_inspect` · `nika_explain` · `nika_schema` · `nika_examples` · `nika_template` · `nika_canon` · `nika_catalog` · `nika_tools`, read-only by design ([threat model](integrations/mcp/THREAT-MODEL.md)) |
 
@@ -612,7 +621,7 @@ Three mechanisms, each with its own scope:
 | `nika wire <client>` | one machine | the read-only oracle, added to that client's MCP settings |
 
 The [VS Code extension](https://github.com/nika-open/nika-vscode) is not a
-plugin, and it is frozen at 0.120 and not qualified with 0.124: in an editor,
+plugin, and it is frozen at 0.120 and not qualified with 0.125: in an editor,
 use `nika lsp` and the JSON Schema. On Cursor it points you to this plugin
 for the agent side.
 
@@ -642,11 +651,17 @@ release; the daily `release-heal` workflow opens that re-sync pull request.
   .codex-plugin/plugin.json           Codex manifest (its marketplace card and starter prompts)
   .cursor-plugin/plugin.json          Cursor manifest (rules · skills · agents · commands · hooks · MCP)
   .mcp.json                           the read-only oracle: nika mcp
-  skills/                             nika-authoring (with references/) · nika-debugging · nika-operating · nika-migration
-  agents/                             nika-author · nika-debugger · nika-migrator
-  commands/                           check · compile · doctor · explain · permits · trace
+  .lsp.json                           the language server for Claude Code: nika lsp
+  skills/                             nika-authoring (with references/) · nika-debugging · nika-operating · nika-migration · nika-running
+  agents/                             nika-author · nika-reviewer · nika-scout · nika-debugger · nika-migrator
+  commands/                           capture · check · compile · connect · doctor · explain · ideas · improve · make · pending · permits · report · run · trace
   hooks/                              claude-hooks.json · cursor-hooks.json: session context · check on edit · run guard
-  scripts/                            the hook scripts and their tests
+                                      claude-session-hooks.json: the session hooks written for Claude Code
+  monitors/                           the waiting-runs and run-progress monitors (Claude Code)
+  bin/nika-kit                        decides which nika binary the kit's helpers use
+  scripts/                            the hook and command scripts and their tests
+  workflows/                          port-to-nika · nika-forge · nika-audit (Claude Code)
+  evals/                              cases for claude plugin eval
   rules/                              nika-workflow-language.mdc · nika-delegation.mdc
   assets/ · README.md · CHANGELOG.md
 skills/autonomous-ai-agents/nika/     the Hermes delegation skill (owned here)
@@ -723,7 +738,7 @@ the versions it was checked with, and gated against the released binary.
 | 🦋 | [nika](https://github.com/nika-open/nika) | The engine and CLI: write, check, run and verify AI workflows |
 | 📖 | [nika-docs](https://github.com/nika-open/nika-docs) | The documentation, live at [docs.nika.sh](https://docs.nika.sh) |
 | 📜 | [nika-spec](https://github.com/nika-open/nika-spec) | The language specification and the suite that proves an engine follows it |
-| 🧩 | [nika-vscode](https://github.com/nika-open/nika-vscode) | The editor extension, frozen at 0.120 and not qualified with 0.124: use `nika lsp` and the JSON Schema |
+| 🧩 | [nika-vscode](https://github.com/nika-open/nika-vscode) | The editor extension, frozen at 0.120 and not qualified with 0.125: use `nika lsp` and the JSON Schema |
 | 🟦 | [nika-client](https://github.com/nika-open/nika-client) | Run and verify workflows from TypeScript |
 | ✅ | [nika-action](https://github.com/nika-open/nika-action) | A GitHub Action that posts a `nika check` verdict on your pull requests |
 | 🚀 | [nika-actions-starter](https://github.com/nika-open/nika-actions-starter) | A ready template: workflows, editor setup and CI from the first push |
