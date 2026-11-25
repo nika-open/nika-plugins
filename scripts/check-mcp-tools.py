@@ -8,11 +8,13 @@
 # `nika_*` names are exactly the tools `nika mcp` exposes over the wire, and
 # (b) every kit-native .md registered in mirror.json only advertises tool
 # names the wire serves (subset — a pack may list fewer, never a phantom),
-# and (c) each integration page that describes `tools/list` or
-# `prompts/list` states the count the wire serves and, for prompts, names
-# exactly the prompts the wire serves (earned 2026-11-25: three pages said
-# "seven prompts" by hand and nothing compared them with the binary).
-# Runs in CI after the pinned nika is installed; also runnable locally:
+# and (c) each integration page that describes the wire states, wherever
+# its prose counts tools or prompts, the counts the wire serves, and its
+# `prompts/list` sentences name exactly the prompts the wire serves (earned
+# 2026-11-25: three pages said "seven prompts" by hand and nothing compared
+# them with the binary). A page with no readable count of either is refused
+# too, so a rewording cannot turn the check off.
+# Runs in CI after the latest released nika is installed; also runnable locally:
 # NIKA_BIN=/path/to/nika python3 scripts/check-mcp-tools.py
 #
 # Exit 0 = surfaces ⟺ binary agree. Exit 1 = drift (names printed).
@@ -88,18 +90,21 @@ def wire_listing(nika: str) -> tuple[set, set]:
             msg = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if msg.get("id") in (1, 2, 3):
+        # a reply carries no `method`; a server request reusing an id is not one
+        if "method" not in msg and msg.get("id") in (1, 2, 3):
             replies[msg["id"]] = msg
-    if "result" not in replies.get(2, {}):
-        raise SystemExit("check-mcp-tools: no tools/list reply from `nika mcp` "
-                         f"(stderr: {out.stderr.strip()[:160]})")
+    stderr = out.stderr.strip()[:160]
+    for rid, method in ((1, "initialize"), (2, "tools/list")):
+        if "result" not in replies.get(rid, {}):
+            raise SystemExit(f"check-mcp-tools: no {method} result from `nika mcp` "
+                             f"(error: {replies.get(rid, {}).get('error')}, stderr: {stderr})")
     tools = {t["name"] for t in replies[2]["result"].get("tools", [])}
-    advertised = replies.get(1, {}).get("result", {}).get("capabilities", {})
     prompts = set()
-    if "prompts" in advertised:
+    if "prompts" in replies[1]["result"].get("capabilities", {}):
         if "result" not in replies.get(3, {}):
-            raise SystemExit("check-mcp-tools: `nika mcp` advertises prompts but "
-                             "gave no prompts/list reply")
+            raise SystemExit("check-mcp-tools: `nika mcp` advertises prompts but gave no "
+                             f"prompts/list result (error: {replies.get(3, {}).get('error')}, "
+                             f"stderr: {stderr})")
         prompts = {p["name"] for p in replies[3]["result"].get("prompts", [])}
     return tools, prompts
 
@@ -125,27 +130,34 @@ def sentences(text: str) -> list[str]:
     prose = re.sub(r"```.*?```", "", text, flags=re.S)
     out = []
     for para in re.split(r"\n\s*\n", prose):
-        out += re.split(r"(?<=[.!?])\s+", " ".join(para.split()))
+        out += re.split(r"(?<!e\.g\.)(?<!i\.e\.)(?<=[.!?])\s+", " ".join(para.split()))
     return out
 
 
-def listing_claims(text: str, kind: str) -> list[tuple[str, int | None, set]]:
-    """Every sentence naming `<kind>/list`: the count it states (None when it
-    states none) and, for prompts, the backticked names it lists."""
+def count_claims(text: str, kind: str) -> list[tuple[str, int]]:
+    """Every count of `kind` the prose states, as digits or a number word,
+    with its sentence. A word that is not a number ("the tools") states none."""
     claims = []
     for sentence in sentences(text):
-        if f"`{kind}/list`" not in sentence:
-            continue
-        count = None
         for m in COUNT_RE[kind].finditer(sentence):
             word = m.group(1).lower()
             if word.isdigit():
-                count = int(word)
+                claims.append((sentence, int(word)))
             elif word in NUMBER_WORDS:
-                count = NUMBER_WORDS[word]
+                claims.append((sentence, NUMBER_WORDS[word]))
+    return claims
+
+
+def prompt_name_claims(text: str) -> list[tuple[str, set]]:
+    """Every sentence naming `prompts/list` with the backticked names it lists."""
+    claims = []
+    for sentence in sentences(text):
+        if "`prompts/list`" not in sentence:
+            continue
         names = {t for t in TICKED_RE.findall(sentence)
                  if "/" not in t and not t.startswith("nika_") and "*" not in t}
-        claims.append((sentence, count, names))
+        if names:
+            claims.append((sentence, names))
     return claims
 
 
@@ -155,19 +167,27 @@ def check_listing_pages(tools: set, prompts: set) -> bool:
         text = (ROOT / rel).read_text(encoding="utf-8")
         page_failed = False
         for kind, wire in (("tools", tools), ("prompts", prompts)):
-            for sentence, count, names in listing_claims(text, kind):
-                if count is not None and count != len(wire):
+            claims = count_claims(text, kind)
+            if not claims:
+                page_failed = True
+                print(f"✗ {rel}: states no readable count of {kind} — say how many "
+                      f"`{kind}/list` serves, in digits or a number word", file=sys.stderr)
+            for sentence, count in claims:
+                if count != len(wire):
                     page_failed = True
-                    print(f"✗ {rel}: says {count} {kind} over `{kind}/list`, the "
-                          f"wire serves {len(wire)}: {sentence[:120]}", file=sys.stderr)
-                if kind == "prompts" and names and names != wire:
-                    page_failed = True
-                    print(f"✗ {rel}: names prompts {sorted(names)}, the wire serves "
-                          f"{sorted(wire)}", file=sys.stderr)
+                    print(f"✗ {rel}: says {count} {kind}, the wire serves {len(wire)}: "
+                          f"{sentence[:120]}", file=sys.stderr)
+        for sentence, names in prompt_name_claims(text):
+            if names != prompts:
+                page_failed = True
+                print(f"✗ {rel}: names prompts {sorted(names)}, the wire serves "
+                      f"{sorted(prompts)}: {sentence[:120]}", file=sys.stderr)
         if page_failed:
             failed = True
         else:
-            print(f"✓ {rel} · its tools/list and prompts/list sentences match the wire")
+            print(f"✓ {rel} · {len(count_claims(text, 'tools'))} tool and "
+                  f"{len(count_claims(text, 'prompts'))} prompt counts match the wire "
+                  f"({len(tools)} tools, {len(prompts)} prompts)")
     return failed
 
 

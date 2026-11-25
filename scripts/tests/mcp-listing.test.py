@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 # SPDX-License-Identifier: Apache-2.0
 #
-# The listing-page law of check-mcp-tools.py, without a binary: a page's
-# `tools/list` and `prompts/list` sentences must state the served counts and
-# name exactly the served prompts.
+# The listing-page law of check-mcp-tools.py, without a binary: every count
+# of tools or prompts a page's prose states must equal what the wire serves,
+# a page must state one of each, and its `prompts/list` sentences must name
+# exactly the served prompts.
 
 import contextlib
 import importlib.util
@@ -20,9 +21,10 @@ spec.loader.exec_module(MODULE)
 TOOLS = {f"nika_{n}" for n in "canon catalog check examples explain inspect schema template tools".split()}
 PROMPTS = set("capture check compile explain ideas permits trace".split())
 GOOD = (
-    "The oracle serves nine `nika_*` tools over `tools/list` and seven prompts\n"
-    "over `prompts/list` (`check`, `explain`, `compile`, `trace`, `permits`,\n"
-    "`ideas`, `capture`). The rest is a plugin feature.\n\n"
+    "At 0.125.1 the oracle serves nine `nika_*` tools over `tools/list` and\n"
+    "seven prompts over `prompts/list` (`check`, `explain`, `compile`, `trace`,\n"
+    "`permits`, `ideas`, `capture`). The rest is a plugin feature, e.g. the\n"
+    "hooks.\n\n"
     "```sh\necho '3 prompts over `prompts/list`'\n```\n"
 )
 
@@ -33,7 +35,7 @@ def verdict(page: str) -> tuple[bool, str]:
         for rel in MODULE.LISTING_PAGES:
             (root / rel).parent.mkdir(parents=True, exist_ok=True)
             (root / rel).write_text(GOOD)
-        (root / MODULE.LISTING_PAGES[0]).write_text(page)
+        (root / MODULE.LISTING_PAGES[-1]).write_text(page)
         saved, MODULE.ROOT = MODULE.ROOT, root
         err = io.StringIO()
         try:
@@ -46,16 +48,20 @@ def verdict(page: str) -> tuple[bool, str]:
 
 failed, err = verdict(GOOD)
 assert not failed, err
-claims = MODULE.listing_claims(GOOD, "prompts")
-assert [(c, n) for _, c, n in claims] == [(7, PROMPTS)], claims
-assert [c for _, c, _ in MODULE.listing_claims(GOOD, "tools")] == [9]
+assert [c for _, c in MODULE.count_claims(GOOD, "tools")] == [9]
+assert [c for _, c in MODULE.count_claims(GOOD, "prompts")] == [7], "the fenced 3 was read"
+assert [n for _, n in MODULE.prompt_name_claims(GOOD)] == [PROMPTS]
 print("mcp listing pages agree with the wire: PASS")
 
-failed, err = verdict(GOOD.replace("seven prompts", "six prompts"))
-assert failed and "says 6 prompts" in err, err
-failed, err = verdict(GOOD.replace("nine `nika_*` tools", "8 `nika_*` tools"))
+for wrong, said in (("seven prompts", "says 6 prompts"), ("nine `nika_*` tools", "says 8 tools")):
+    page = GOOD.replace(wrong, "six prompts" if "prompts" in wrong else "8 `nika_*` tools")
+    failed, err = verdict(page)
+    assert failed and said in err, err
+failed, err = verdict(GOOD + "\nEight tools ride `tools/list`.\n")
 assert failed and "says 8 tools" in err, err
-print("a wrong count over tools/list or prompts/list is refused: PASS")
+failed, err = verdict(GOOD + "\nA client that loads the stanza alone gets those six prompts.\n")
+assert failed and "says 6 prompts" in err, "a count outside the `prompts/list` sentence was missed"
+print("a wrong count anywhere in the prose is refused: PASS")
 
 failed, err = verdict(GOOD.replace(", `capture`", ", `review`"))
 assert failed and "'review'" in err, err
@@ -63,7 +69,14 @@ failed, err = verdict(GOOD.replace("`ideas`, ", ""))
 assert failed and "names prompts" in err, err
 print("a missing or phantom prompt name is refused: PASS")
 
-failed, err = verdict(GOOD.replace(") The rest", ") Nine tools ride `tools/list`. The rest"))
-assert not failed, err
-print("a number word counts as a claim, a fenced block does not: PASS")
+failed, err = verdict(GOOD.replace("nine `nika_*` tools", "the `nika_*` tools"))
+assert failed and "no readable count of tools" in err, err
+failed, err = verdict(GOOD.replace("seven prompts", "its prompts"))
+assert failed and "no readable count of prompts" in err, err
+print("a page that states no count is refused, so a rewording cannot silence it: PASS")
+
+split = MODULE.sentences(GOOD)
+assert split[0].startswith("At 0.125.1 the oracle") and split[0].endswith("`capture`)."), split
+assert split[1] == "The rest is a plugin feature, e.g. the hooks.", split
+print("sentences keep version numbers and e.g. whole: PASS")
 sys.exit(0)
