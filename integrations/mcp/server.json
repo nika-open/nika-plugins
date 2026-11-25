@@ -8,12 +8,12 @@
     "source": "github"
   },
   "websiteUrl": "https://nika.sh",
-  "version": "0.124.5",
+  "version": "0.125.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@nika-open/nika",
-      "version": "0.124.5",
+      "version": "0.125.1",
       "runtimeHint": "npx",
       "transport": {
         "type": "stdio"
