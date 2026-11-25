@@ -22,10 +22,16 @@ judge() {
   local dialect="$1" code="$2" payload="$3" supplied="$4" expected="$5" out rc=0
   checks=$((checks + 1))
   out="$(printf '%s' "$payload" | env -i PATH="$judge_root:/usr/bin:/bin" \
+    HOME="$judge_root/home" XDG_STATE_HOME="$judge_root/state" \
     GUARD_TEST_OUTPUT="$supplied" GUARD_TEST_EXIT="$code" /bin/bash "$SHIM" 2>&1)" || rc=$?
   if [ "$expected" = unavailable ]; then
-    if [ "$rc" -eq 2 ] && [[ "$out" == *guard_unavailable* ]]; then
-      printf 'ok    %s exit %s refuses\n' "$dialect" "$code"
+    # Each refusal names its real cause. The binary is on PATH in every
+    # case here, so none of them may send the person to restore it.
+    cause='did not give a verdict'
+    [ "$code" -ne 3 ] || [ -z "$supplied" ] || cause='could not judge this command'
+    if [ "$rc" -eq 2 ] && [[ "$out" == *guard_unavailable* ]] \
+      && [[ "$out" == *"$cause"* ]] && [[ "$out" != *"not on PATH"* ]]; then
+      printf 'ok    %s exit %s refuses (%s)\n' "$dialect" "$code" "$cause"
       return
     fi
   elif [ "$rc" -eq 0 ] && [ "$out" = "$expected" ]; then

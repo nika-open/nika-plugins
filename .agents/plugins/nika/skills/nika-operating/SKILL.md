@@ -17,11 +17,20 @@ Judge `clean` (the exit's verdict under the flags you passed; under
 repeats `clean`), `paid_ready` and resolved-child coverage separately, with
 the engine/spec identity that produced the report.
 
+**What needs the person, and what never does.** Their yes is needed to arm a
+schedule, to raise a ceiling, to change where a secret may go, to move a
+workflow to a paid or cloud model, to change what their CI runs, to export
+traces to a host and to answer a gate. Checking, reading every beat with
+`nika arm` (it fires nothing), proposing permits with `--infer-permits`,
+pinning a golden for a workflow without effects and showing a plan with
+`nika run <file> --dry-run` never wait for them. A yes covers what it names,
+once: do not ask twice.
+
 ## Spend (the envelope is part of the contract)
 
 - `nika check <file>` estimates output-token cost BEFORE any token: `≤ $X`
   bounds that output estimate, not prompt/input cost or the entire invoice.
-  `≥ $X FLOOR` means at least one task is unbounded — fix
+  `est unbounded` means at least one task is uncapped or unpriced — fix
   the reason (a missing `max_tokens`, an uncataloged model, an
   expression fan-out). Before unattended use, state the exposure and
   applicable controls; unpriced compute must not be called a bounded USD cost.
@@ -209,17 +218,30 @@ fsync durability or that a detached write has stopped.
 ## MCP servers and definition drift
 
 A configured MCP server that changes its tool definitions after you
-approved them is the rug pull. Nika pins every tool on first contact
-(TOFU) into `.nika/mcp_pins.json` beside a reviewable snapshot: first
-contact enrolls loudly, a match proceeds silently, ANY drift fails
-closed with a diff naming the CHANGED field and returns no tools. A
-hand-edited lockfile is `NIKA-MCP-004`, never a silent re-TOFU.
+approved them is the rug pull. Nika pins a server's tools when the person
+approves them: `nika mcp approve <server>` starts the server once and
+writes their definitions into `.nika/mcp_pins.json`, where they can be
+reviewed. Nothing is pinned on first contact: a run that names a tool
+which was never approved is refused (`NIKA-MCP-006`) and the server is
+not started. After approval a match proceeds silently, and ANY drift
+fails closed (`NIKA-MCP-003`): no tool from that server reaches the run. A
+hand-edited lockfile is `NIKA-MCP-004`, never read as empty.
 Re-pin after human review: `nika mcp approve <server>`.
 
 A pin detects changes relative to the enrolled definitions. It does not
 prove those descriptions are truthful, the server is harmless, or an effect
 was delivered. Keep the intended permissions and review the actual result;
 re-pinning is a review decision, not an automatic fix for drift.
+
+A pin also records what each tool does, because `permits:` cannot see an
+effect that happens on the server: `nika mcp approve <server>
+--reads-private <tool> --sends-out <tool> --no-role <tool>`. A tool
+declared `private-read` or `egress` counts as that leg of the trifecta at
+`nika check`. A tool with no declared role is not judged by the TRIFECTA
+row, and the check says so in an `mcp-roles` hint. The role is the
+operator's statement, reviewed like `permits:`: never declare one for the
+user, ask which tools read private data and which send out. A changed
+definition drops the role, so re-approving asks for it again.
 
 ## Observability (the journal is exportable, not captive)
 
@@ -248,6 +270,27 @@ re-pinning is a review decision, not an automatic fix for drift.
   invalidly-signed workflow at exit 2. `nika key` is the run-signing
   key lifecycle (mint · TOFU fingerprint · rotate — old public halves
   stay verifiable).
+
+## Running without the person
+
+When someone wants a workflow to keep running while they are away, lay out
+the choices in one table and let them pick. Set up the one they choose, and
+nothing more. A secret never moves to another host by your hand: say where
+it has to live, and they put it there.
+
+| Choice | What it needs | Where the secrets live | What it costs |
+|---|---|---|---|
+| A schedule on this machine: an `arm:` beat in `nika.yaml` | this machine awake at the hour; a beat with its cadence, zone and `plafond:`; a unit written by `nika arm --emit`, or a resident `nika serve` | where they are today, in this machine's store | the model calls, under the beat's `plafond:` |
+| The repository's CI | the workflow and `nika.yaml` committed; a job that installs the binary, runs `nika check`, then `nika run` with `--max-cost-usd` | in the CI's own secret store, put there by the person | the model calls, plus CI minutes |
+| A scheduled cloud task of the agent host | the workflow, `nika.yaml` and the project's agent files committed, since the task starts from a clone and not from this machine; the binary installed at the start of each run; an interval the host allows (an hour at the shortest on the hosts read when this was written) | in the host's own secret settings, put there by the person; a key or a local model on this machine is out of its reach | the model calls, plus the host's usage for the agent that starts the run |
+| Their own `nika serve` | a machine that stays up; `nika serve` resident, firing the beats, or taking jobs by name over HTTP with a token file (`--bind`, `--workflows`, `--token-file`). It listens on loopback unless told otherwise and does not terminate TLS, so a reverse proxy goes in front before another machine reaches it | on that machine | the model calls, plus the machine |
+
+Say three things whatever they pick. A human gate still pauses the run
+until someone answers: on 0.125.0 a scheduled workflow that keeps a gate
+pauses at every fire. The record of each run stays where the run happened,
+so say how they will read it (`nika trace ls` there, or an export). And a
+ceiling is part of every unattended run: the beat's `plafond:`, the project
+`ceiling:` or `--max-cost-usd` on the run line.
 
 ## Production checklist
 

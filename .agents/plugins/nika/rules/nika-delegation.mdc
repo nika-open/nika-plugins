@@ -17,20 +17,84 @@ secrets), proven after it runs (hash-chained trace).
   every X, watch-then-act)
 - anything with a spend concern, an approval step, or an audit need
 - converting an existing script/CI job that wraps AI or HTTP plumbing
+- a fan-out over many items in parallel: pages, locales, files, images,
+  tickets (`for_each` with a bounded pool)
+- media pipelines: images, edits, composition, charts, speech
+- comparing several models on the same input
+- parallel agent seats (Codex or Claude Code over ACP) working on many
+  items
+- crawling and research across sources
+- watchers that act on change, with state kept between runs
+- reconciliation and data jobs that must be exact (jq, not model
+  arithmetic)
+- anything that must run again, be audited, or be capped
 
 Do NOT reach for it for one-shot questions, interactive exploration,
 or pure code edits.
 
+Two commands start from what exists: `/nika:ideas` reads the project and
+proposes five workflows it would use; `/nika:capture` turns the work just
+done in this conversation into a checked workflow.
+
+## The loop for a new job
+
+One flow, whatever the host. Where a step names a role and the host has no
+subagents, do the step yourself with the skill; the steps do not change.
+
+1. **Facts first.** When the design depends on something not yet seen (the
+   shape of a file, an existing workflow, which builtin fits), look it up
+   before designing: the `nika-scout` role, or the oracle and a few reads.
+2. **Plan, approved once.** Show the phases, what the job reads, writes in
+   the project, sends out of the machine, spends and runs, and the cost per
+   run. Take those lines from `nika check` and `nika inspect`, never from
+   reading the file by eye. Three answers: build, revise, drop.
+3. **Build by phase.** Write one phase, `nika check`, repair, then the next:
+   the `nika-author` role, or the `nika-authoring` skill.
+4. **Review cold.** Above eight tasks, or when an effect leaves the machine,
+   a reviewer that saw only the person's sentence and the file judges it:
+   the `nika-reviewer` role, or the same five questions answered from the
+   binary's output and marked as not independent. Below that, the check and
+   a rehearsal are the review.
+5. **Repair, at most two rounds, then hand over.** The hand-over carries the
+   reviewer's verdict in the reviewer's words and ends with the verdict of
+   `nika check` on the final file, quoted.
+
+Done means: the check is clean, the job was rehearsed, every file the
+rehearsal wrote was opened and parsed. When the person said not to run it, do not rehearse on the mock model
+either: read the plan with `nika run <file> --dry-run`, which executes
+nothing, and say in the hand-over that the job was not rehearsed.
+
+## What needs the person, and what never does
+
+- **Needs their yes:** the plan (once); the answer to a human gate; an
+  effect they did not name (a send, a host, a program, an MCP server, a
+  write outside their folder); a paid model route; publishing anything.
+- **Never needs it:** checking; repairing a finding; adding validation,
+  state or a report; writing the workflow and its outputs under the
+  project's `out/`; a rehearsal on the mock model of a job that sends
+  nothing, reaches no host and pins no model on a task;
+  `nika run <file> --dry-run` of any job.
+
+Do the second list without asking. A mock model replaces the workflow's own
+model only: tools, writes and sends stay real, and a model pinned on a task
+is still called for real, so a mock rehearsal of a job that sends or pins a
+model is a run, and a run is theirs to start. `--dry-run` shows the plan and
+executes no effect.
+
 ## Choose the relevant skill or bounded role
 
 - **Author**: the `nika-author` subagent (or the `nika-authoring`
-  skill) — template-first, check-loop until rc=0.
+  skill) — design, build by phase, check-loop until rc=0.
+- **Review**: the `nika-reviewer` subagent — the sentence and the path in,
+  a verdict out; it edits nothing.
+- **Gather facts**: the `nika-scout` subagent — read-only and fast.
 - **Debug a run**: the `nika-debugger` subagent (or `nika-debugging`)
   — trace-first forensics, exact resume line.
 - **Port a script**: the `nika-migrator` subagent (or
   `nika-migration`) — inventory, native-first mapping, parity pin.
 - **Harden for production**: the `nika-operating` skill — spend caps,
-  permits, secrets, CI goldens, OTLP export.
+  permits, secrets, CI goldens, OTLP export, and the ways to keep a
+  workflow running without the person.
 - **Quick oracle, no shell**: the read-only MCP tools — `nika_check` · `nika_inspect` ·
   `nika_explain` · `nika_schema` · `nika_examples` · `nika_template` ·
   `nika_canon` · `nika_catalog` · `nika_tools`.
@@ -49,13 +113,20 @@ available and authorized. A skill route does not require delegation.
   with its `--max-cost-usd` and declared effects. `nika guard` judges at the
   configured hook. Never a spontaneous run. Do not ask again for the same
   permission, or treat a green check as new authorization.
+- A run that stopped (exit 1 or 130) is read before it is run again: its
+  trace names the task that stopped and what already happened. A second run
+  from the start repeats every effect of the first. A run refused before it
+  started (exit 2 or 3) ran nothing and left no trace: fix the file or the
+  model route, and never read the latest trace for it, which is an older
+  run's.
 - The human gate is theirs alone: never pre-fill `--answer`. A paused
   run's question goes back to the conversation, verbatim; you resume
-  only with the answer they gave.
+  only with the answer they gave. A waiting run is state on disk, not
+  memory: `nika trace ls` lists it in any session.
 - Cost honesty: the checker estimates output tokens; input billing may be
   unpriced. Metered caps can overshoot for calls already admitted. A local
   model is "unpriced", never "free".
 - Every effect needs a `permits:` block: absent means ZERO authority
   (`NIKA-AUTH-006`), never the unconfined floor.
-- Missing binary: `brew install supernovae-st/tap/nika` — never
+- Missing binary: `brew install nika-open/tap/nika` — never
   improvise YAML from memory when the oracle is unavailable.

@@ -1,12 +1,12 @@
 {
   "name": "nika",
-  "description": "Turn a task you repeat into a workflow you can understand, check and reuse — checked before execution, with run evidence to inspect. Requires the nika binary: brew install supernovae-st/tap/nika",
-  "version": "0.124.4",
+  "description": "Turn a task you repeat into a workflow you can understand, check and reuse — checked before execution, with run evidence to inspect. Requires the nika binary: brew install nika-open/tap/nika",
+  "version": "0.125.1",
   "author": {
-    "name": "SuperNovae Studio",
-    "url": "https://supernovae.studio"
+    "name": "Nika",
+    "url": "https://nika.sh"
   },
-  "repository": "https://github.com/supernovae-st/nika",
+  "repository": "https://github.com/nika-open/nika",
   "homepage": "https://nika.sh",
   "license": "AGPL-3.0-or-later",
   "skills": "./skills/",
@@ -17,7 +17,7 @@
     "displayName": "Nika",
     "shortDescription": "Turn a repeated task into a checked workflow",
     "longDescription": "Turn a task you repeat into a workflow you can understand, check and reuse.\n\nYour task → A preview → A checked workflow.\n\nFor a preview-only request, Nika shows the inputs, steps and output without creating a file or running it. When you have already authorized creation or execution, your agent can carry it through the checks and permissions. An unknown business decision or human-gate answer still needs your answer. Before execution, `nika check` reports the plan, output-token cost estimate, secret flows, types and effect boundary; its findings guide repairs without running the workflow.\n\nWhat the plugin adds to your agent: skills for authoring, debugging, operating and migrating workflows; subagents that write a file, diagnose a failed run from available evidence, or port an existing script; slash commands for the audit, the scaffold, the trace and the permits boundary; and a read-only oracle that answers schema, example, template and catalog questions without executing workflows.\n\nAuthorized execution uses the CLI under the engine and host gates. When metered spend exceeds the cap, the runtime stops admitting new tasks and fan-out iterations. Work already admitted can finish and overshoot; unpriced work has no measured USD bound. The effect boundary is declared in the file and reviewable in a diff. Recorded traces are hash-chained and can be verified; early refusal, disabled journaling or an I/O failure can leave no complete trace.",
-    "developerName": "SuperNovae Studio",
+    "developerName": "Nika",
     "category": "Developer Tools",
     "capabilities": [
       "Author Nika workflows",
@@ -27,7 +27,7 @@
       "Migrate scripts to workflows"
     ],
     "websiteURL": "https://nika.sh",
-    "supportURL": "https://github.com/supernovae-st/nika/issues",
+    "supportURL": "https://github.com/nika-open/nika/issues",
     "defaultPrompt": [
       "Help me turn one task I repeat into a Nika workflow. First identify the current project, restate the outcome in my language, and show a simple visual preview with inputs, steps and output. Do not create a file, call a model or run anything yet.",
       "Teach me what Nika is through one small, concrete and safe example. Show the user request, the workflow preview, what nika check proves, what a run would do, and what the trace would explain. Do not write files, call a model, inspect private project files or run anything. End by asking whether I want to adapt the example to my own work.",

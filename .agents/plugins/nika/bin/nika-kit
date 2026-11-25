@@ -1,0 +1,133 @@
+#!/usr/bin/env bash
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# nika-kit — which nika binary the kit's helpers use, and why.
+#
+# A machine can hold several: a release on the PATH, a pinned candidate, the
+# build of an engine tree being worked on. A helper that quietly picks
+# another binary than the one the work targets reports a verdict about the
+# wrong engine. Every helper asks here, so the answer is one and can be read.
+#
+# A project never chooses the binary. The hooks, the monitors and both gates
+# run what this script names, so nothing a repository holds is ever picked:
+# the choice comes from the session's environment or from the PATH.
+#
+# Order, first match wins:
+#   1. NIKA_BIN, when set: the pin. A pin that names no executable is an
+#      error, never a silent fall back to another binary.
+#   2. Inside the engine tree only: $CARGO_TARGET_DIR/debug/nika, when that
+#      variable is an absolute path that does not resolve inside the
+#      repository (the session's own build folder).
+#   3. The first `nika` on the PATH.
+#
+# A build under a tree's own target/debug is never chosen, engine tree
+# included. The default mode says so in one line when one exists, with the
+# pin that selects it; no other mode mentions it. The tree is recognised by
+# its crates/nika-cli: that only decides whether the session's folder is
+# looked at, the binary itself never comes from the repository.
+#
+# The run guard does not ask here. It judges with the PATH binary only.
+#
+# Usage:
+#   nika-kit [location]            path, why and version, three lines, and
+#                                  a note when the PATH holds another nika
+#                                  or the tree holds a build of its own
+#   nika-kit --path [location]     the path alone (exit 1 and a reason when none)
+#   nika-kit --has <feature> [location]
+#                                  exit 0 when this binary has it, 1 when not,
+#                                  2 with no binary. Features: consent
+#                                  (a `consent` verb), mcp-shelf (`catalog --mcp`)
+set -u
+
+mode=show
+feature=""
+case "${1:-}" in
+  --path)
+    mode=path
+    shift
+    ;;
+  --has)
+    mode=has
+    feature="${2:-}"
+    shift 2 2>/dev/null || shift
+    ;;
+  -h | --help)
+    sed -n '3,38p' "$0" | sed 's/^# \{0,1\}//'
+    exit 0
+    ;;
+esac
+location="${1:-$PWD}"
+[ -d "$location" ] || location="$(dirname "$location")"
+
+# session_build <git root>: the session's build of the engine tree, when the
+# root is the engine tree and CARGO_TARGET_DIR is an absolute folder whose
+# real path lies outside it. Prints nothing otherwise.
+session_build() {
+  local root="$1" build tree
+  [ -n "$root" ] && [ -f "$root/crates/nika-cli/Cargo.toml" ] || return 0
+  case "${CARGO_TARGET_DIR:-}" in /*) ;; *) return 0 ;; esac
+  [ -f "$CARGO_TARGET_DIR/debug/nika" ] && [ -x "$CARGO_TARGET_DIR/debug/nika" ] || return 0
+  build="$(cd "$CARGO_TARGET_DIR/debug" 2>/dev/null && pwd -P)" || return 0
+  tree="$(cd "$root" 2>/dev/null && pwd -P)" || return 0
+  [ -n "$build" ] && [ -n "$tree" ] || return 0
+  case "$build/" in "$tree"/*) return 0 ;; esac
+  printf '%s\n' "$CARGO_TARGET_DIR/debug/nika"
+}
+
+bin=""
+why=""
+root=""
+if [ -n "${NIKA_BIN:-}" ]; then
+  if command -v "$NIKA_BIN" >/dev/null 2>&1; then
+    bin="$NIKA_BIN"
+    why="NIKA_BIN pins it"
+  else
+    echo "nika-kit: NIKA_BIN is set to $NIKA_BIN, which is not an executable; unset it or point it at a nika binary" >&2
+    [ "$mode" = has ] && exit 2
+    exit 1
+  fi
+else
+  # git is asked only when the answer can matter: step 2 needs an absolute
+  # CARGO_TARGET_DIR, and the default mode names an unchosen tree build.
+  case "${CARGO_TARGET_DIR:-}" in
+    /*) root="$(git -C "$location" rev-parse --show-toplevel 2>/dev/null || true)" ;;
+  esac
+  bin="$(session_build "$root")"
+  if [ -n "$bin" ]; then
+    why="the session's build of the engine tree at $root (CARGO_TARGET_DIR, outside the tree)"
+  elif command -v nika >/dev/null 2>&1; then
+    bin="$(command -v nika)"
+    why="the first nika on the PATH"
+  fi
+fi
+
+if [ -z "$bin" ]; then
+  echo "nika-kit: no nika binary (NIKA_BIN is unset and the PATH holds none; a build inside a project is never picked). Install: curl -LsSf https://nika.sh/install.sh | sh" >&2
+  [ "$mode" = has ] && exit 2
+  exit 1
+fi
+
+case "$mode" in
+  path) printf '%s\n' "$bin" ;;
+  has)
+    case "$feature" in
+      consent) "$bin" help consent >/dev/null 2>&1 || exit 1 ;;
+      mcp-shelf) "$bin" catalog --help 2>/dev/null | grep -q -- '--mcp' || exit 1 ;;
+      *)
+        echo "nika-kit: unknown feature '$feature' (known: consent, mcp-shelf)" >&2
+        exit 64
+        ;;
+    esac
+    ;;
+  show)
+    version="$("$bin" --version 2>/dev/null | head -n 1)"
+    printf 'path: %s\nwhy: %s\nversion: %s\n' "$bin" "$why" "${version:-did not answer --version}"
+    on_path="$(command -v nika 2>/dev/null || true)"
+    if [ -n "$on_path" ] && [ "$on_path" != "$bin" ]; then
+      printf 'note: the run guard judges with the PATH binary (%s), not this one\n' "$on_path"
+    fi
+    [ -n "$root" ] || root="$(git -C "$location" rev-parse --show-toplevel 2>/dev/null || true)"
+    if [ -n "$root" ] && [ -x "$root/target/debug/nika" ] && [ "$root/target/debug/nika" != "$bin" ]; then
+      printf 'note: this tree holds a build of its own, which is never chosen (a project does not choose the binary); to judge with it, pin it: export NIKA_BIN=%q\n' "$root/target/debug/nika"
+    fi
+    ;;
+esac

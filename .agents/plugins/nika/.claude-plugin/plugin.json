@@ -1,13 +1,13 @@
 {
   "name": "nika",
-  "description": "Author, debug, operate and migrate AI workflows as checkable .nika files — 4 skills, 3 subagents, 2 rules, 6 slash commands (/nika:check · /nika:explain · /nika:compile · /nika:trace · /nika:permits · /nika:doctor), 3 hooks on every surface — Cursor, Claude Code and Codex (one dialect, sniffed) (session context · check-on-edit · a guard that audits before any nika run) and the read-only Nika MCP oracle (9 tools · nika_check through nika_tools). Requires the nika binary: brew install supernovae-st/tap/nika",
-  "version": "0.124.4",
+  "description": "Author, debug, operate and migrate AI workflows as checkable .nika files — 5 skills, 5 subagents, 2 rules, 14 slash commands (/nika:check · /nika:explain · /nika:compile · /nika:trace · /nika:permits · /nika:doctor · /nika:make · /nika:run · /nika:pending · /nika:ideas · /nika:capture · /nika:report · /nika:improve · /nika:connect), 3 hooks on every surface — Cursor, Claude Code and Codex (one dialect, sniffed) (session context · check-on-edit · a guard that audits before any nika run) and the read-only Nika MCP oracle (9 tools · nika_check through nika_tools). Requires the nika binary: brew install nika-open/tap/nika",
+  "version": "0.125.1",
   "author": {
-    "name": "SuperNovae Studio",
+    "name": "Nika",
     "url": "https://nika.sh"
   },
   "homepage": "https://docs.nika.sh",
-  "repository": "https://github.com/supernovae-st/nika",
+  "repository": "https://github.com/nika-open/nika",
   "license": "AGPL-3.0-or-later",
   "keywords": [
     "nika",
@@ -17,5 +17,19 @@
     "agent",
     "audit"
   ],
-  "hooks": "./hooks/claude-hooks.json"
+  "hooks": [
+    "./hooks/claude-hooks.json",
+    "./hooks/claude-session-hooks.json"
+  ],
+  "displayName": "Nika",
+  "icon": "./assets/nika-logo.png",
+  "userConfig": {
+    "max_cost_usd": {
+      "type": "number",
+      "title": "Spending cap per run (USD)",
+      "description": "The cap added to every run started through /nika:run, unless you name another one.",
+      "default": 1,
+      "min": 0
+    }
+  }
 }

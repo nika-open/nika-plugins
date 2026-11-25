@@ -1,6 +1,6 @@
 ---
 description: Inspect a Nika run's result, trace integrity and recovery evidence.
-argument-hint: [trace-or-workflow]
+argument-hint: "[trace-or-workflow]"
 allowed-tools: Bash(nika trace:*), Bash(nika explain:*), Read, Glob
 ---
 

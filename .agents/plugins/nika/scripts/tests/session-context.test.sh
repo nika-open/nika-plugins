@@ -22,6 +22,8 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_COMMON_DIR GIT_OBJECT_DIRECTORY
 HOOK="$(cd "$(dirname "$0")/.." && pwd)/session-context.sh"
 ROOT="$(mktemp -d)"
 trap 'rm -rf "$ROOT"' EXIT
+export HOME="$ROOT/home"
+mkdir -p "$HOME"
 FAILS=0
 say() { printf '%s\n' "$*"; }
 fail() {
@@ -77,6 +79,8 @@ play "$ROOT" "{\"cwd\":\"$WS\"}"
 need valid-payload-cwd 'This workspace uses Nika'
 need valid-payload-cwd "$ws_resolved"
 need valid-payload-cwd 'payload_cwd'
+need valid-payload-cwd 'One file can crawl sites and read feeds, fan out over many items'
+need valid-payload-cwd 'ideas, capture'
 
 # 4 · payload cwd = a SUBDIR of a git workspace — the map must name the
 # resolved git root (the subdir law, proven lost 2026-07-12), with the
