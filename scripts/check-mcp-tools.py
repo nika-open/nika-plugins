@@ -7,7 +7,11 @@
 # tool would leave the marketplace lying. This asserts (a) the README's
 # `nika_*` names are exactly the tools `nika mcp` exposes over the wire, and
 # (b) every kit-native .md registered in mirror.json only advertises tool
-# names the wire serves (subset — a pack may list fewer, never a phantom).
+# names the wire serves (subset — a pack may list fewer, never a phantom),
+# and (c) each integration page that describes `tools/list` or
+# `prompts/list` states the count the wire serves and, for prompts, names
+# exactly the prompts the wire serves (earned 2026-11-25: three pages said
+# "seven prompts" by hand and nothing compared them with the binary).
 # Runs in CI after the pinned nika is installed; also runnable locally:
 # NIKA_BIN=/path/to/nika python3 scripts/check-mcp-tools.py
 #
@@ -61,17 +65,21 @@ def kit_native_md_tools() -> dict:
     return out
 
 
-def served_tools(nika: str) -> set:
-    """The tool names `nika mcp` actually exposes (JSON-RPC tools/list)."""
+def wire_listing(nika: str) -> tuple[set, set]:
+    """The tool and prompt names `nika mcp` actually exposes (JSON-RPC
+    tools/list and prompts/list). A binary that does not advertise the
+    prompts capability serves no prompts."""
     handshake = "\n".join(json.dumps(m) for m in [
         {"jsonrpc": "2.0", "id": 1, "method": "initialize",
          "params": {"protocolVersion": "2025-06-18", "capabilities": {},
                     "clientInfo": {"name": "gate", "version": "1"}}},
         {"jsonrpc": "2.0", "method": "notifications/initialized"},
         {"jsonrpc": "2.0", "id": 2, "method": "tools/list", "params": {}},
+        {"jsonrpc": "2.0", "id": 3, "method": "prompts/list", "params": {}},
     ]) + "\n"
     out = subprocess.run([nika, "mcp"], input=handshake, text=True,
                          capture_output=True, timeout=30)
+    replies = {}
     for line in out.stdout.splitlines():
         line = line.strip()
         if not line:
@@ -80,10 +88,87 @@ def served_tools(nika: str) -> set:
             msg = json.loads(line)
         except json.JSONDecodeError:
             continue
-        if msg.get("id") == 2 and "result" in msg:
-            return {t["name"] for t in msg["result"].get("tools", [])}
-    raise SystemExit("check-mcp-tools: no tools/list reply from `nika mcp` "
-                     f"(stderr: {out.stderr.strip()[:160]})")
+        if msg.get("id") in (1, 2, 3):
+            replies[msg["id"]] = msg
+    if "result" not in replies.get(2, {}):
+        raise SystemExit("check-mcp-tools: no tools/list reply from `nika mcp` "
+                         f"(stderr: {out.stderr.strip()[:160]})")
+    tools = {t["name"] for t in replies[2]["result"].get("tools", [])}
+    advertised = replies.get(1, {}).get("result", {}).get("capabilities", {})
+    prompts = set()
+    if "prompts" in advertised:
+        if "result" not in replies.get(3, {}):
+            raise SystemExit("check-mcp-tools: `nika mcp` advertises prompts but "
+                             "gave no prompts/list reply")
+        prompts = {p["name"] for p in replies[3]["result"].get("prompts", [])}
+    return tools, prompts
+
+
+# The pages that describe what the oracle serves over the wire, in prose.
+LISTING_PAGES = [
+    "integrations/mcp/README.md",
+    "integrations/openclaude/README.md",
+    "integrations/opencode/README.md",
+]
+NUMBER_WORDS = {w: i for i, w in enumerate(
+    "zero one two three four five six seven eight nine ten eleven twelve "
+    "thirteen fourteen fifteen sixteen".split())}
+COUNT_RE = {
+    "tools": re.compile(r"\b(\d+|[a-z]+)\s+(?:`nika_\*`\s+)?tools\b", re.I),
+    "prompts": re.compile(r"\b(\d+|[a-z]+)\s+prompts\b", re.I),
+}
+TICKED_RE = re.compile(r"`([^`]+)`")
+
+
+def sentences(text: str) -> list[str]:
+    """Paragraph-joined sentences, outside fenced code blocks."""
+    prose = re.sub(r"```.*?```", "", text, flags=re.S)
+    out = []
+    for para in re.split(r"\n\s*\n", prose):
+        out += re.split(r"(?<=[.!?])\s+", " ".join(para.split()))
+    return out
+
+
+def listing_claims(text: str, kind: str) -> list[tuple[str, int | None, set]]:
+    """Every sentence naming `<kind>/list`: the count it states (None when it
+    states none) and, for prompts, the backticked names it lists."""
+    claims = []
+    for sentence in sentences(text):
+        if f"`{kind}/list`" not in sentence:
+            continue
+        count = None
+        for m in COUNT_RE[kind].finditer(sentence):
+            word = m.group(1).lower()
+            if word.isdigit():
+                count = int(word)
+            elif word in NUMBER_WORDS:
+                count = NUMBER_WORDS[word]
+        names = {t for t in TICKED_RE.findall(sentence)
+                 if "/" not in t and not t.startswith("nika_") and "*" not in t}
+        claims.append((sentence, count, names))
+    return claims
+
+
+def check_listing_pages(tools: set, prompts: set) -> bool:
+    failed = False
+    for rel in LISTING_PAGES:
+        text = (ROOT / rel).read_text(encoding="utf-8")
+        page_failed = False
+        for kind, wire in (("tools", tools), ("prompts", prompts)):
+            for sentence, count, names in listing_claims(text, kind):
+                if count is not None and count != len(wire):
+                    page_failed = True
+                    print(f"✗ {rel}: says {count} {kind} over `{kind}/list`, the "
+                          f"wire serves {len(wire)}: {sentence[:120]}", file=sys.stderr)
+                if kind == "prompts" and names and names != wire:
+                    page_failed = True
+                    print(f"✗ {rel}: names prompts {sorted(names)}, the wire serves "
+                          f"{sorted(wire)}", file=sys.stderr)
+        if page_failed:
+            failed = True
+        else:
+            print(f"✓ {rel} · its tools/list and prompts/list sentences match the wire")
+    return failed
 
 
 def main() -> int:
@@ -92,8 +177,8 @@ def main() -> int:
         print("check-mcp-tools: nika not on PATH — install it first", file=sys.stderr)
         return 1
     documented = documented_tools()
-    served = served_tools(nika)
-    failed = False
+    served, prompts = wire_listing(nika)
+    failed = check_listing_pages(served, prompts)
     if documented == served:
         print(f"✓ README ⟺ nika mcp agree · {len(served)} tools: "
               f"{' · '.join(sorted(served))}")

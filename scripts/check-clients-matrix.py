@@ -81,6 +81,7 @@ COUNT_SCAN = [
     ".agents/plugins/nika/.codex-plugin/plugin.json",
     ".agents/plugins/nika/.cursor-plugin/plugin.json",
     "integrations/grok-build/README.md",
+    "integrations/openclaude/README.md",
     # the suite strip paints the same counts — same law, same derivation
     "media/suite-dark.svg",
     "media/suite-light.svg",
