@@ -144,3 +144,114 @@ with tempfile.TemporaryDirectory() as tmp:
     assert "keep.md" in output, output
 
 print("resync mirror vanished engine-mirror path is prune-warn, not abort: PASS")
+
+# File modes follow the engine at the ref (earned 2026-11-25: only `.sh`
+# files got the executable bit, so `bin/nika-kit` and the Python helpers
+# would have reached the mirror without it). Five cases: a new executable
+# with no `.sh` suffix, a new `.sh` the engine ships without the bit, a
+# pinned file whose bytes match but whose bit was lost, a pinned `.sh` that
+# has the bit the engine does not give it, and a pinned file whose bytes
+# change and which the engine now ships executable.
+with tempfile.TemporaryDirectory() as tmp:
+    tmp = pathlib.Path(tmp)
+    engine = tmp / "engine"
+    plugin = engine / ".agents/plugins/nika"
+    (plugin / "bin").mkdir(parents=True)
+    (plugin / "scripts").mkdir()
+    (plugin / "plugin.json").write_text('{"version": "0.121.0"}\n')
+    (plugin / "bin/tool").write_text("#!/bin/sh\necho tool\n")
+    (plugin / "bin/tool").chmod(0o755)
+    (plugin / "scripts/plain.sh").write_text("echo plain\n")
+    (plugin / "scripts/plain.sh").chmod(0o644)
+    (plugin / "scripts/helper.py").write_text("print('helper')\n")
+    (plugin / "scripts/helper.py").chmod(0o755)
+    (plugin / "scripts/hook.sh").write_text("echo hook\n")
+    (plugin / "scripts/hook.sh").chmod(0o644)
+    (plugin / "bin/runner").write_text("#!/bin/sh\necho new\n")
+    (plugin / "bin/runner").chmod(0o755)
+    _git(engine, "init")
+    _git(engine, "-c", "core.fileMode=true", "add", ".")
+    _git(engine, "commit", "-m", "kit")
+    _git(engine, "tag", "v0.121.0")
+    origin = tmp / "engine.git"
+    subprocess.check_call(["git", "clone", "--bare", "--quiet", str(engine), str(origin)])
+    _git(engine, "remote", "add", "origin", str(origin))
+
+    kit = tmp / "kit"
+    MODULE.ROOT = kit
+    (kit / ".agents/plugins/nika/scripts").mkdir(parents=True)
+    helper = kit / ".agents/plugins/nika/scripts/helper.py"
+    helper.write_text("print('helper')\n")
+    helper.chmod(0o644)
+    hook = kit / ".agents/plugins/nika/scripts/hook.sh"
+    hook.write_text("echo hook\n")
+    hook.chmod(0o755)
+    (kit / ".agents/plugins/nika/bin").mkdir()
+    runner = kit / ".agents/plugins/nika/bin/runner"
+    runner.write_text("#!/bin/sh\necho old\n")
+    runner.chmod(0o644)
+    (kit / ".claude-plugin").mkdir()
+    (kit / ".cursor-plugin").mkdir()
+    for relative in MODULE.MARKETPLACE_MANIFESTS:
+        (kit / relative).write_text(json.dumps(marketplace("0.121.0")) + "\n")
+    dockerfile = kit / MODULE.DOCKERFILE
+    dockerfile.parent.mkdir(parents=True, exist_ok=True)
+    dockerfile.write_text(
+        "# --build-arg NIKA_VERSION=0.121.0\n"
+        "ARG NIKA_VERSION=0.121.0\n"
+    )
+    import hashlib
+    manifest = {
+        "engine_repo": "nika-open/nika",
+        "engine_ref": "v0.121.0",
+        "engine_scope": ".agents/plugins/nika/",
+        "synced_at_engine_sha": "deadbeef",
+        "entries": [
+            {"class": "engine-mirror", "path": ".agents/plugins/nika/plugin.json",
+             "sha256": hashlib.sha256(b'{"version": "0.121.0"}\n').hexdigest()},
+            {"class": "engine-mirror", "path": ".agents/plugins/nika/scripts/helper.py",
+             "sha256": hashlib.sha256(b"print('helper')\n").hexdigest()},
+            {"class": "engine-mirror", "path": ".agents/plugins/nika/scripts/hook.sh",
+             "sha256": hashlib.sha256(b"echo hook\n").hexdigest()},
+            {"class": "engine-mirror", "path": ".agents/plugins/nika/bin/runner",
+             "sha256": hashlib.sha256(b"#!/bin/sh\necho old\n").hexdigest()},
+        ],
+    }
+    (kit / ".agents/plugins/nika/plugin.json").write_text('{"version": "0.121.0"}\n')
+    (kit / "mirror.json").write_text(json.dumps(manifest) + "\n")
+
+    def run(*extra: str) -> str:
+        saved = sys.argv
+        sys.argv = [str(SCRIPT), *extra, "--ref", "v0.121.0", "--engine", str(engine)]
+        out = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(out):
+                assert MODULE.main() == 0, out.getvalue()
+        finally:
+            sys.argv = saved
+        return out.getvalue()
+
+    def executable(path: pathlib.Path) -> bool:
+        return bool(path.stat().st_mode & 0o100)
+
+    dry = run("--dry")
+    assert "helper.py  mode → 755" in dry, dry
+    assert "hook.sh  mode → 644" in dry, dry
+    assert not executable(helper), "--dry changed a file mode"
+    assert executable(hook), "--dry changed a file mode"
+    assert runner.read_text() == "#!/bin/sh\necho old\n", "--dry rewrote bytes"
+
+    run()
+    nika = kit / ".agents/plugins/nika"
+    assert executable(nika / "bin/tool"), "a new executable without .sh arrived without its bit"
+    assert not executable(nika / "scripts/plain.sh"), "a .sh the engine ships 644 became executable"
+    assert executable(helper), "a pinned file whose bit was lost was not healed"
+    assert not executable(hook), "a pinned .sh kept a bit the engine does not give it"
+    assert runner.read_text() == "#!/bin/sh\necho new\n", "a stale pinned file was not rewritten"
+    assert executable(runner), "a rewritten file did not take the engine's executable bit"
+
+    again = run()
+    assert "mode →" not in again, again
+    assert "mirror already current" in again, again
+
+print("resync mirror file modes follow the engine: PASS")

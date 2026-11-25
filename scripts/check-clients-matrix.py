@@ -22,7 +22,9 @@
 #                  `wire:` values and the binary's `nika wire` target list
 #                  match in BOTH directions (rows with wire_pending excluded).
 #   5. --upstream  the engine bundle tree holds no file the mirror does not
-#                  pin (the addition-blindness class · doctor.md 2026-07-30).
+#                  pin (the addition-blindness class · doctor.md 2026-07-30),
+#                  and every mirrored file has the engine's executable bit
+#                  (bin/nika-kit nearly arrived without it, 2026-11-25).
 #                  Network (GitHub trees API) · warns on push/PR, fails on the
 #                  daily cron (GATE_EVENT=schedule) — same semantics as the
 #                  upstream-drift step.
@@ -345,6 +347,28 @@ def check_upstream(findings_warn):
     if not (upstream - known) and not (known - upstream):
         print(f"  upstream additions: mirror covers all {len(upstream)} "
               f"bundle files under {scope}")
+    # A mirrored file keeps the engine's executable bit: the session hooks
+    # and the commands call bin/nika-kit and the Python helpers by path.
+    modes = {t["path"]: t["mode"] for t in tree if t["type"] == "blob"}
+    compared = drift = 0
+    for e in manifest["entries"]:
+        if e["class"] != "engine-mirror":
+            continue
+        mode = modes.get(e.get("source", e["path"]))
+        local = ROOT / e["path"]
+        if mode not in ("100755", "100644") or local.is_symlink() or not local.is_file():
+            continue
+        compared += 1
+        executable = mode == "100755"
+        if bool(local.stat().st_mode & 0o100) != executable:
+            drift += 1
+            want = "executable" if executable else "without the executable bit"
+            have = "is not" if executable else "has the bit"
+            findings_warn.append(
+                f"{e['path']}: the engine ships it {want} and the mirror copy {have} "
+                f"— run scripts/resync-mirror.py")
+    if compared and not drift:
+        print(f"  upstream modes: all {compared} mirrored files have the engine's executable bit")
 
 
 EVERYWHERE = ("https://raw.githubusercontent.com/nika-open/nika-docs/"

@@ -124,6 +124,7 @@ class Source:
         self.repo = repo
         self.ref = ref
         self.clone = clone
+        self._modes: dict[str, str] | None = None
         if clone is not None:
             self._fetch_clone()
 
@@ -184,11 +185,39 @@ class Source:
                 capture_output=True, text=True, check=True,
             )
             return [p for p in r.stdout.splitlines() if p]
-        url = f"https://api.github.com/repos/{self.repo}/git/trees/{self.ref}?recursive=1"
-        with urllib.request.urlopen(url, timeout=30) as resp:
-            tree = json.loads(resp.read())["tree"]
-        return [t["path"] for t in tree
-                if t["type"] == "blob" and t["path"].startswith(prefix)]
+        return [p for p in self._api_modes() if p.startswith(prefix)]
+
+    def _api_modes(self) -> dict[str, str]:
+        """Every blob of the ref with its git mode, from ONE trees API call:
+        the listing, the modes and the truncation refusal share a response."""
+        if self._modes is None:
+            url = f"https://api.github.com/repos/{self.repo}/git/trees/{self.ref}?recursive=1"
+            with urllib.request.urlopen(url, timeout=30) as resp:
+                listing = json.loads(resp.read())
+            if listing.get("truncated"):
+                sys.exit("the trees API truncated the engine tree, so its files and modes are "
+                         "unknown — re-run with --engine <path-to-nika-clone> "
+                         "(or set NIKA_ENGINE_CLONE)")
+            self._modes = {t["path"]: t["mode"] for t in listing["tree"] if t["type"] == "blob"}
+        return self._modes
+
+    def mode(self, path: str) -> str | None:
+        """The git mode of path at the ref (a blob is `100755` or `100644`;
+        a link `120000`), None if absent.
+
+        Earned 2026-11-25: the copy step set the executable bit on `.sh`
+        files only, so `bin/nika-kit` and nine Python helpers the engine
+        ships executable would have reached the mirror without it, while the
+        session hooks and the commands call them by path. The mode now comes
+        from the same ref as the bytes."""
+        if self.clone is not None:
+            r = subprocess.run(
+                ["git", "-C", str(self.clone), "ls-tree", self._rev(), "--", path],
+                capture_output=True, text=True,
+            )
+            fields = r.stdout.split(None, 1)
+            return fields[0] if r.returncode == 0 and fields else None
+        return self._api_modes().get(path)
 
     def try_local_fallback(self) -> bool:
         """Rate-limited mid-run: switch to a discoverable clone if one exists."""
@@ -202,6 +231,21 @@ class Source:
                 print(f"  ! raw API rate-limited — continuing from the local clone at {self.clone}")
                 return True
         return False
+
+
+def apply_mode(local: pathlib.Path, mode: str | None, dry: bool) -> bool:
+    """Give `local` the executable bit its engine mode says; True if it differed.
+
+    A link is left alone (chmod would follow it). Git records 100755 from
+    the owner's bit, so that is the bit compared."""
+    if mode not in ("100755", "100644") or local.is_symlink() or not local.is_file():
+        return False
+    executable = mode == "100755"
+    if bool(local.stat().st_mode & 0o100) == executable:
+        return False
+    if not dry:
+        local.chmod(0o755 if executable else 0o644)
+    return True
 
 
 def main() -> int:
@@ -293,8 +337,13 @@ def main() -> int:
         local = ROOT / e["path"]
         same_bytes = local.is_file() and local.read_bytes() == upstream
         same_pin = e["sha256"] == digest
+        mode = source.mode(path)
         if same_bytes and same_pin:
-            print(f"  = {e['path']}")
+            if apply_mode(local, mode, dry):
+                changed += 1
+                print(f"  ~ {e['path']}  mode → {'755' if mode == '100755' else '644'}")
+            else:
+                print(f"  = {e['path']}")
             continue
         changed += 1
         print(f"  ~ {e['path']}  pin {e['sha256'][:9]} → {digest[:9]}"
@@ -302,8 +351,7 @@ def main() -> int:
         if not dry:
             local.parent.mkdir(parents=True, exist_ok=True)
             local.write_bytes(upstream)
-            if str(local).endswith(".sh"):
-                local.chmod(0o755)
+            apply_mode(local, mode, dry)
             e["sha256"] = digest
     for path in sorted(upstream_set - known):
         upstream = source.read(path)
@@ -314,8 +362,7 @@ def main() -> int:
             local = ROOT / path
             local.parent.mkdir(parents=True, exist_ok=True)
             local.write_bytes(upstream)
-            if str(local).endswith(".sh"):
-                local.chmod(0o755)
+            apply_mode(local, source.mode(path), dry)
             manifest["entries"].append(
                 {"class": "engine-mirror", "path": path, "sha256": digest})
     # A kit-native file whose path EXISTS at the ref is a mirror candidate
@@ -337,7 +384,7 @@ def main() -> int:
         manifest["synced_at_engine_sha"] = head
         manifest_path.write_text(json.dumps(manifest, indent=2,
                                             ensure_ascii=False) + "\n")
-        print(f"re-pinned {changed} file(s), aligned {marketplace_changed} "
+        print(f"re-synced {changed} file(s), aligned {marketplace_changed} "
               f"marketplace manifest(s) and {docker_changed} Docker default(s) "
               f"at engine {ref} ({head[:9]}) — review "
               f"the diff, then commit")
