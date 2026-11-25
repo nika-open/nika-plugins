@@ -208,7 +208,10 @@ client. What each one loads from the plugin:
 
 <sub>The oracle is <code>nika mcp</code>: a read-only MCP server your agent asks to check and explain
 workflows, with no tool that runs one. Cursor also loads the 2 rules (the language rule and the
-delegation rule); its row is what its manifest declares, not yet checked live.</sub>
+delegation rule); its row is what its manifest declares, not yet checked live. <code>/nika:make</code>,
+<code>/nika:run</code>, <code>/nika:pending</code>, <code>/nika:report</code>, <code>/nika:improve</code> and
+<code>/nika:connect</code> call helper scripts through the Claude Code plugin root; on another client
+each of them says how to do the same step with the <code>nika</code> binary alone.</sub>
 
 ### Claude Code
 
@@ -286,14 +289,10 @@ it in the repository. VS Code reads only the portable part of the bundle,
 the skills and the oracle, once its `chat.plugins.enabled` setting is on.
 
 `npx plugins discover nika-open/nika-plugins` shows what it found before
-anything is written. Below is the line `plugins@1.3.4` printed on 2026-09-10,
-with the counts brought to the 0.125.1 bundle (not replayed since):
-
-```
-◇  Found 1 local plugin(s)
-│
-│  nika  5 skills, 14 cmds, 5 agents, 2 rules, mcp  Author, debug, operate and m…
-```
+anything is written. Its last replay, with `plugins@1.3.4` on 2026-09-10,
+found this one plugin with its skills, commands, agents, rules and oracle;
+it has not been replayed on the current bundle, which holds 5 skills, 14
+commands, 5 subagents and 2 rules.
 
 ### Everyone else
 
@@ -482,9 +481,9 @@ that file):
 
 | Client | Receipt |
 |---|---|
-| **Claude Code** | the whole suite loads in a session: skills · subagents · `/nika:*` commands · hooks · the oracle |
+| **Claude Code** | on 2026-07-30 the suite of that day loaded in a session: skills · subagents · `/nika:*` commands · hooks · the oracle; the parts added since are not yet proven live |
 | **Codex** | a live install (plugin cache enabled) · the marketplace page shows the plugin's card |
-| **Grok Build** | `grok inspect --json` lists every part with its origin · `grok mcp doctor --json` reports the handshake OK ([details](integrations/grok-build/)) |
+| **Grok Build** | on kit 0.106.0, `grok inspect --json` listed every part with its origin and `grok mcp doctor --json` reported the handshake OK; nothing added since has been inspected ([details](integrations/grok-build/)) |
 | **Kimi Code** | a stream-json run calls `mcp__nika__nika_canon`: the oracle loaded and answered ([details](integrations/kimi-code/)) |
 | **opencode** | `opencode mcp list` answers `✓ nika connected` ([details](integrations/opencode/)) |
 | **Copilot CLI** | `copilot mcp get nika` answers · a headless `copilot -p` run calls the oracle |

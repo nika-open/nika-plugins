@@ -177,7 +177,7 @@ clients:
     status: proven
     install: "nika init  (AGENTS.md is read natively) · oracle: nika wire opencode"
     components: {mcp: wire, scaffold: init}
-    class_gap: "no plugin loader · AGENTS.md + the oracle carry the teaching · tool names are server-prefixed in-session · prompts/list not served so slash commands stay a plugin feature"
+    class_gap: "no plugin loader · AGENTS.md + the oracle carry the teaching · tool names are server-prefixed in-session · the oracle serves a few prompts and the other slash commands stay a plugin feature"
     wire: opencode
     proof: "integrations/opencode/README.md fiche · verified live 2026-07-09 · opencode 1.17.5 · nika 0.98.0 · deterministic check: opencode mcp list → ✓ nika connected"
     docs: integrations/opencode.mdx

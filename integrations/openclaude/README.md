@@ -33,8 +33,8 @@ openclaude plugin marketplace update nika   # later: pull a new kit version
 ```
 
 One Add gets the whole bundle: 5 skills (author · debug · operate ·
-migrate · run), 5 subagents, 14 commands, the delegation rule, the three
-seatbelt hooks and the read-only MCP oracle.
+migrate · run), 5 subagents, 14 commands, the three
+seatbelt hooks, the session hooks and the read-only MCP oracle.
 
 **Honest status — read before quoting this.** The lines above are derived
 from their published source, not from a live install on this machine. The
