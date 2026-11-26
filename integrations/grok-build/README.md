@@ -35,7 +35,7 @@ Two facts we verified live so you don't have to:
 ## What loads
 
 Grok Build reads the Claude Code layout, so it is offered the same bundle.
-At 0.125.1 that bundle carries:
+At 0.125.2 that bundle carries:
 
 - the 5 skills · authoring · debugging · operating · migration · running
 - the 14 `/nika:*` commands · check · explain · compile · trace · permits ·
