@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/session-status.sh",
+            "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/session-status.sh",
             "timeout": 10
           }
         ]
@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/intent-hint.sh",
+            "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/intent-hint.sh",
             "timeout": 5
           }
         ]
@@ -27,7 +27,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/stop-gate.sh",
+            "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/stop-gate.sh",
             "timeout": 30
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/author-stop-gate.py",
+            "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/python-hook.sh author-stop-gate.py",
             "timeout": 60
           }
         ]
@@ -51,7 +51,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/run-failed-hint.py",
+            "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/python-hook.sh run-failed-hint.py",
             "timeout": 10
           }
         ]
@@ -62,7 +62,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/precompact-notes.py",
+            "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/python-hook.sh precompact-notes.py",
             "timeout": 30
           }
         ]

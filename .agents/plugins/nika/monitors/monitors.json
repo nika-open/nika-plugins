@@ -1,13 +1,13 @@
 [
   {
     "name": "nika-waiting-runs",
-    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/pending-watch.sh",
+    "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/pending-watch.sh",
     "description": "Nika runs waiting for an answer",
     "when": "on-skill-invoke:nika-running"
   },
   {
     "name": "nika-run-progress",
-    "command": "\"${CLAUDE_PLUGIN_ROOT}\"/scripts/run-progress.sh",
+    "command": "/bin/bash -p \"${CLAUDE_PLUGIN_ROOT}\"/scripts/run-progress.sh",
     "description": "Nika run progress: a task that failed, was recovered or paused, and spend against the ceiling",
     "when": "on-skill-invoke:nika-running"
   }

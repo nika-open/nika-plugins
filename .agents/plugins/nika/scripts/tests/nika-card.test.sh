@@ -103,7 +103,7 @@ check "branches, failure routes, joins, fan-outs and gates are counted" "$out" "
 check "a task without a ceiling is named" "$out" "draft (no max_tokens)"
 check "nine tasks and an effect that leaves ask for a review" "$out" "Review    needed: 9 tasks, an effect leaves the machine, it runs a program"
 data="$(card "$ROOT/wide.nika" --json)"
-if printf '%s' "$data" | python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d["depth"]["tasks"] == 9 and d["review"] and not d["verdict"]["clean"] else 1)'; then
+if printf '%s' "$data" | python3 -I -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d["depth"]["tasks"] == 9 and d["review"] and not d["verdict"]["clean"] else 1)'; then
   echo "ok   --json carries the same card as data"
 else
   echo "FAIL --json is not the expected shape"

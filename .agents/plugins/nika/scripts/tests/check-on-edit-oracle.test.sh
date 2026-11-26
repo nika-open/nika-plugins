@@ -98,6 +98,76 @@ if [ -x "$HERE/../../bin/nika-kit" ]; then echo "ok   the plugin pass went throu
   fails=$((fails + 1))
 fi
 
+# planted <file> <marker> <judge>: an executable resolver that leaves <marker>
+# and names <judge>, the shape a repository could ship beside a hook.
+planted() {
+  mkdir -p "${1%/*}"
+  cat >"$1" <<EOF
+#!/usr/bin/env bash
+: >>"$2"
+printf '%s\n' "$3"
+EOF
+  chmod +x "$1"
+}
+
+# The plugin copy keeps asking the resolver beside it: a plugin layout whose
+# bin/nika-kit records its call and names the explicit judge.
+mkdir -p "$ROOT/plugin/scripts"
+cp "$HERE/../check-on-edit.sh" "$ROOT/plugin/scripts/check-on-edit.sh"
+planted "$ROOT/plugin/bin/nika-kit" "$ROOT/plugin-kit-ran" "$ROOT/explicit/nika"
+HOOK="$ROOT/plugin/scripts/check-on-edit.sh"
+judge "in the plugin · the resolver beside the hook names the judge" "$PROJECT/flow.nika" explicit
+if [ -e "$ROOT/plugin-kit-ran" ]; then echo "ok   in the plugin · the hook asked its resolver"; else
+  echo "FAIL in the plugin · the hook never asked the resolver beside it"
+  fails=$((fails + 1))
+fi
+
+# A project copy, as `nika init` writes it into .claude/hooks-nika/ and
+# .cursor/hooks-nika/: the kit's bytes with its one resolver line emptied
+# (nika-onboard pins that this is the only line init changes). There the
+# folder beside the hook is the repository's, and it holds a resolver of its
+# own. That resolver never runs, and the order above still picks the judge.
+REPO="$ROOT/repo"
+mkdir -p "$REPO"
+git -C "$REPO" init -q
+printf 'nika: flow\npermits: {}\ntasks: {}\n' >"$REPO/flow.nika"
+stub "$ROOT/planted-judge" planted
+for client in .claude .cursor; do
+  copy="$REPO/$client/hooks-nika/check-on-edit.sh"
+  mkdir -p "${copy%/*}"
+  sed 's|^resolver="../bin/nika-kit"$|resolver=""|' "$HERE/../check-on-edit.sh" >"$copy"
+  if [ "$(grep -c '^resolver=""$' "$copy")" = 1 ] && ! grep -q 'nika-kit' "$copy"; then
+    echo "ok   $client project copy · one resolver line, emptied"
+  else
+    echo "FAIL $client project copy · the stamp did not take: the kit's resolver line moved"
+    fails=$((fails + 1))
+  fi
+  planted "$REPO/$client/bin/nika-kit" "$ROOT/planted-ran" "$ROOT/planted-judge/nika"
+  HOOK="$copy"
+  judge "$client project copy · NIKA_BIN wins" "$REPO/flow.nika" explicit \
+    NIKA_BIN="$ROOT/explicit/nika"
+  judge "$client project copy · the PATH judges" "$REPO/flow.nika" path-bin
+  judge "$client project copy · outside the engine, the session folder never judges" "$REPO/flow.nika" path-bin \
+    CARGO_TARGET_DIR="$ROOT/session-target"
+  judge "$client project copy · inside the engine, the session folder judges" "$ENGINE/flows/flow.nika" session-target \
+    CARGO_TARGET_DIR="$ROOT/session-target"
+done
+if [ ! -e "$ROOT/planted-ran" ]; then echo "ok   no project copy ran the repository's resolver"; else
+  echo "FAIL a project copy ran the resolver the repository holds"
+  fails=$((fails + 1))
+fi
+
+# The control: the kit's bytes copied unstamped to the same place do run the
+# repository's resolver. Without the stamp this suite above would go red.
+HOOK="$REPO/.claude/hooks-nika/unstamped.sh"
+cp "$HERE/../check-on-edit.sh" "$HOOK"
+judge "control · an unstamped copy obeys the planted resolver" "$REPO/flow.nika" planted
+if [ -e "$ROOT/planted-ran" ]; then echo "ok   control · the planted resolver ran for the unstamped copy"; else
+  echo "FAIL control · the unstamped copy did not reach the planted resolver: this test proves nothing"
+  fails=$((fails + 1))
+fi
+rm -f "$ROOT/planted-ran"
+
 # A folder name is data from the project: the command the hook tells the
 # reader to run carries it shell-quoted, so pasting the line runs the check
 # and nothing the name holds.

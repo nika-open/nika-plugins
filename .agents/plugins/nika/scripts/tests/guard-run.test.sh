@@ -9,11 +9,13 @@
 #     the hosts' shared blocking protocol, for every command.
 #   - Elsewhere: the command goes through. The first call warns (exit 1,
 #     stderr, no stdout), later calls answer the no-opinion {} until the
-#     binary has been seen again.
+#     binary has been seen again, the marker under XDG_STATE_HOME, or under
+#     TMPDIR when the state folder cannot hold it.
 # No command below is executed: payloads are data handed to the shim.
 #
 # Run with the binary genuinely absent — a PATH with a shell and nothing
-# else — and with a temporary HOME and XDG_STATE_HOME, never the real ones.
+# else — and with a temporary HOME, XDG_STATE_HOME and TMPDIR, never the
+# real ones.
 set -uo pipefail
 
 HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -57,11 +59,13 @@ scratch="$(cd "$scratch" && pwd -P)"
 home="$scratch/home"
 state="$scratch/state"
 marker="$state/nika/guard-off.warned"
-mkdir -p "$home/.nika" "$home/work" "$scratch/outside" "$scratch/bin" \
+tmp="$scratch/tmp"
+tmp_marker="$tmp/nika-guard-off.$UID.warned"
+mkdir -p "$tmp" "$home/.nika" "$home/work" "$scratch/outside" "$scratch/bin" \
   "$scratch/project/deep/er" "$scratch/store/.nika" "$scratch/store/sub"
 : >"$scratch/project/nika.yaml"
 # A judge that answers « no opinion », to bring the binary back.
-printf '%s\n' '#!/bin/sh' '/bin/cat >/dev/null' "printf '{}'" >"$scratch/bin/nika"
+printf '%s\n' '#!/bin/sh' '/bin/cat >/dev/null' "printf '{}\\n'" >"$scratch/bin/nika"
 chmod +x "$scratch/bin/nika"
 
 # shim <dir> <payload> [NAME=value …] — run the shim from <dir>; sets rc out err.
@@ -71,7 +75,7 @@ shim() {
   shift 2
   rc=0
   out="$(cd "$dir" && printf '%s' "$payload" | env -i PATH="$BARE_PATH" HOME="$home" \
-    XDG_STATE_HOME="$state" "$@" /bin/bash "$SHIM" 2>"$scratch/stderr")" || rc=$?
+    XDG_STATE_HOME="$state" TMPDIR="$tmp" "$@" /bin/bash "$SHIM" 2>"$scratch/stderr")" || rc=$?
   err="$(cat "$scratch/stderr")"
 }
 
@@ -88,7 +92,7 @@ blocked() {
   if [ "$rc" -ne 2 ] || [ -n "$out" ] || [[ "$err" != *guard_unavailable* ]] \
     || [[ "$err" != *"this is a Nika project"* ]]; then
     fail "$name" 'want exit 2, no stdout, guard_unavailable naming the project'
-  elif [ -e "$marker" ]; then
+  elif [ -e "$marker" ] || [ -e "$tmp_marker" ]; then
     fail "$name" 'a refusal must not consume the one warning'
   else
     printf 'ok    %s (blocked)\n' "$name"
@@ -155,6 +159,7 @@ blocked 'a payload cwd outside the project' "$scratch/project" \
 # --- elsewhere: warn once, then pass silently ------------------------------
 warned 'the first command outside a project' "$scratch/outside"
 [ -e "$marker" ] || fail 'the warning marker' "want $marker written"
+[ ! -e "$tmp_marker" ] || fail 'the warning marker' "want no $tmp_marker beside a state folder"
 for i in "${!payloads[@]}"; do
   silent "payload $i outside, already warned" "$scratch/outside" "${payloads[$i]}"
 done
@@ -176,15 +181,39 @@ silent 'the binary gone again, second command' "$scratch/outside" '{"command":"l
 rm -f "$marker"
 warned 'the first command under HOME' "$home/work"
 
-# --- no state directory to remember the warning: warn each time, never block
-shim "$scratch/outside" '{"command":"ls","cwd":"/tmp"}' HOME= XDG_STATE_HOME=
-first="$rc"
-shim "$scratch/outside" '{"command":"ls","cwd":"/tmp"}' HOME= XDG_STATE_HOME=
-if [ "$first" -ne 1 ] || [ "$rc" -ne 1 ] || [[ "$err" != *guard_off* ]]; then
-  fail 'no state directory' 'want the warning (exit 1) on every call'
+# --- no state folder to name, or one that cannot hold the marker: the
+# marker goes under TMPDIR, the warning shows once, and nothing blocks ------
+rm -f "$marker"
+: >"$scratch/a-file"
+for case in 'no state folder:HOME= XDG_STATE_HOME=' \
+  "a state folder that cannot hold the marker:XDG_STATE_HOME=$scratch/a-file/state"; do
+  name="${case%%:*}"
+  read -r -a vars <<<"${case#*:}"
+  warned "$name, first command" "$scratch/outside" "${vars[@]}"
+  if [ -d "$tmp_marker" ] && [ ! -L "$tmp_marker" ]; then
+    printf 'ok    %s: the marker is a folder under TMPDIR\n' "$name"
+  else
+    fail "$name" "want $tmp_marker made"
+  fi
+  silent "$name, second command" "$scratch/outside" '{"command":"ls","cwd":"/tmp"}' "${vars[@]}"
+  shim "$scratch/outside" '{"command":"ls","cwd":"/tmp"}' PATH="$scratch/bin:$BARE_PATH" "${vars[@]}"
+  if [ "$rc" -ne 0 ] || [ "$out" != '{}' ] || [ -e "$tmp_marker" ]; then
+    fail "$name, the binary back" 'want the judge verdict and the TMPDIR marker removed'
+  else
+    printf 'ok    %s: the binary back clears the TMPDIR marker\n' "$name"
+  fi
+done
+# A marker that is not a real folder of this user's (a link planted at its
+# name, a file) is no marker: the warning shows, nothing is made through it.
+mkdir "$scratch/elsewhere"
+ln -s "$scratch/elsewhere" "$tmp_marker"
+warned 'a link at the TMPDIR marker' "$scratch/outside" HOME= XDG_STATE_HOME=
+if [ -L "$tmp_marker" ] && [ -z "$(ls -A "$scratch/elsewhere")" ]; then
+  printf 'ok    a link at the TMPDIR marker is left as it is\n'
 else
-  printf 'ok    no state directory warns each time, never blocks\n'
+  fail 'a link at the TMPDIR marker' 'want the link kept and nothing made where it leads'
 fi
+rm -f "$tmp_marker"
 
 # --- exit 1 is a warning only while no manifest turns failures into blocks --
 for manifest in "$HERE/../../hooks/claude-hooks.json" "$HERE/../../hooks/cursor-hooks.json"; do

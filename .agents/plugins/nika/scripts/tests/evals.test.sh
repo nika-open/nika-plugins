@@ -77,7 +77,7 @@ for prompt in "$EVALS"/*/prompt.md; do
 done
 
 if command -v python3 >/dev/null 2>&1; then
-  if python3 - "$EVALS" <<'PY'; then echo "ok   every pattern is played on its samples"; else bad "a grader's pattern does not hold on its samples"; fi
+  if python3 -I - "$EVALS" <<'PY'; then echo "ok   every pattern is played on its samples"; else bad "a grader's pattern does not hold on its samples"; fi
 import glob
 import json
 import os

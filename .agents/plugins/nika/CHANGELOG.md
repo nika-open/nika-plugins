@@ -140,6 +140,10 @@ full plugin path, teach one `nika` command per call (a chained line can be
 refused as a whole and a pipe hides exit 4), and the hook commands quote
 the plugin root so a path with a space still resolves.
 
+## 0.125.2 — 2026-11-26
+
+Lockstep on the engine wave.
+
 ## 0.125.1 — 2026-11-25
 
 Lockstep on the engine wave.

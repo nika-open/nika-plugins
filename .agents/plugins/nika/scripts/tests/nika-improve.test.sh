@@ -113,7 +113,7 @@ if [ "$(cksum <"$P/digest.nika")" = "$before" ]; then echo "ok   the workflow fi
   FAILS=$((FAILS + 1))
 fi
 out="$(improve "$P" digest.nika --json)"
-if printf '%s' "$out" | python3 -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d["runs"] == 4 and all(o["evidence"] for o in d["observations"]) else 1)'; then
+if printf '%s' "$out" | python3 -I -c 'import json,sys; d=json.load(sys.stdin); sys.exit(0 if d["runs"] == 4 and all(o["evidence"] for o in d["observations"]) else 1)'; then
   echo "ok   --json carries an evidence line on every observation"
 else
   echo "FAIL --json is not the expected shape"

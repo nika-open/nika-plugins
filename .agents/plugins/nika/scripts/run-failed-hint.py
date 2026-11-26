@@ -14,11 +14,63 @@ It reads the hook payload on stdin and the trace folder; it never calls
 the binary. Any other failed command draws no output. It cannot block and
 always exits 0; a payload it cannot read is said in one `systemMessage`.
 """
+
+# >>> nika-isolated: every kit Python script starts with this same block,
+# before any other import (a test keeps the copies identical). The kit's
+# manifests start a hook script through python-hook.sh, which runs it with
+# -I from the start. Started by its shebang instead (an agent running a
+# helper), the script runs without -I, so PYTHONPATH and the user's site
+# folder would decide what its imports load: it starts itself again in
+# isolated mode first. What that first interpreter loads before this line
+# comes from the environment it was given (see the README).
+import os, sys
+
+if not sys.flags.isolated:
+    os.execv(sys.executable, [sys.executable, "-I", os.path.abspath(__file__), *sys.argv[1:]])
+# <<< nika-isolated
+
 import glob
 import json
-import os
 import re
-import sys
+
+# >>> nika-clean-path: every kit Python script opens with this same block,
+# before it starts any program (a test keeps the copies identical). Hosts
+# start hooks in the open project, and the PATH can name folders the
+# repository holds, by a relative entry or by an absolute one that leads
+# there. Only the absolute entries whose real folder lies outside the
+# project are kept, as those real folders: the project is each of
+# CLAUDE_PROJECT_DIR, CURSOR_PROJECT_DIR and the working folder, with the
+# git work tree around each, never the home or a folder above it (the same
+# rule as the bash block).
+def _nika_clean_path(env):
+    def real(path):
+        return os.path.realpath(path) if os.path.isabs(path) and os.path.isdir(path) else ""
+
+    def within(path, root):
+        return path == root or path.startswith(root.rstrip(os.sep) + os.sep)
+
+    try:
+        here = os.getcwd()
+    except OSError:
+        here = ""
+    home = real(env.get("HOME", "")) or os.sep
+    roots = []
+    for start in (env.get("CLAUDE_PROJECT_DIR", ""), env.get("CURSOR_PROJECT_DIR", ""), here):
+        folder = real(start)
+        top = folder
+        while top and top != os.sep and not os.path.exists(os.path.join(top, ".git")):
+            top = os.path.dirname(top)
+        roots += [r for r in (folder, top) if r and r != os.sep and not within(home, r)]
+    kept = []
+    for entry in env.get("PATH", "").split(os.pathsep):
+        folder = real(entry)
+        if folder and not any(within(folder, root) for root in roots):
+            kept.append(folder)
+    return os.pathsep.join(kept) or os.pathsep.join(("/usr/bin", "/bin"))
+
+
+os.environ["PATH"] = _nika_clean_path(os.environ)
+# <<< nika-clean-path
 
 RUN = re.compile(r"""(?:^|[\s;&|(/"'])nika(?:-[\w.]+)?["']?\s+run(?:\s|$)""")
 TRACE = re.compile(r"^[A-Za-z0-9_./:-]+\.ndjson$")

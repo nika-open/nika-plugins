@@ -14,6 +14,87 @@
 #
 # Usage: nika-pick-model.sh            # exit 0 = a route was printed
 #                                       # exit 1 = no route, advice printed
+
+# >>> nika-clean-path: every kit hook and helper opens with this same block,
+# before it starts any other program (a test keeps the copies identical).
+# Hosts start hooks in the open project, and the PATH can name folders the
+# repository holds: a relative entry (".", "bin", "node_modules/.bin", the
+# empty one) resolves there, and an absolute one can lead there too. Only
+# the absolute entries whose real folder (cd -P) lies outside the project
+# are kept, as those real folders. The project is each of
+# CLAUDE_PROJECT_DIR, CURSOR_PROJECT_DIR and the working folder, with the
+# git work tree around each (the nearest folder above holding .git), but
+# never the home or a folder above it. A function of builtins, run once in
+# a subshell (bash 3.2 cannot parse a case inside $(...)): nothing runs
+# before the PATH is set. The kit's manifests start this script with
+# /bin/bash -p (see the README for what that does and does not cover).
+nika_clean_path() {
+  local here dir top root home kept rest
+  here="${PWD:-}"
+  set --
+  home=/
+  case "${HOME:-}" in
+    /*) cd -P -- "$HOME" 2>/dev/null && home="$PWD" ;;
+  esac
+  for dir in "${CLAUDE_PROJECT_DIR:-}" "${CURSOR_PROJECT_DIR:-}" "$here"; do
+    case "$dir" in
+      /*) cd -P -- "$dir" 2>/dev/null || continue ;;
+      *) continue ;;
+    esac
+    top="$PWD"
+    while [ -n "$top" ] && [ ! -e "$top/.git" ]; do
+      top="${top%/*}"
+    done
+    for root in "$PWD" "$top"; do
+      case "$root" in
+        '' | /) continue ;;
+      esac
+      case "$home/" in
+        "$root"/*) continue ;;
+      esac
+      set -- "$@" "$root"
+    done
+  done
+  kept=""
+  rest="${PATH:-}"
+  while [ -n "$rest" ]; do
+    dir="${rest%%:*}"
+    case "$rest" in
+      *:*) rest="${rest#*:}" ;;
+      *) rest="" ;;
+    esac
+    case "$dir" in
+      /*) cd -P -- "$dir" 2>/dev/null || continue ;;
+      *) continue ;;
+    esac
+    for root; do
+      case "$PWD/" in
+        "$root"/*) continue 2 ;;
+      esac
+    done
+    kept="${kept:+$kept:}$PWD"
+  done
+  printf '%s' "$kept"
+}
+nika_path="$(nika_clean_path)"
+unset -f nika_clean_path
+PATH="${nika_path:-/usr/bin:/bin}"
+export PATH
+unset nika_path
+# nika_on_path: the nika this PATH names, as an absolute path, when there is
+# one. `type -P` searches the PATH alone: a function or an alias named nika
+# never answers.
+# shellcheck disable=SC2329 # not every script asks for nika
+nika_on_path() {
+  local bin
+  bin="$(type -P nika)" || return 1
+  case "$bin" in
+    /*) printf '%s\n' "$bin" ;;
+    *) return 1 ;;
+  esac
+}
+# <<< nika-clean-path
+
 set -u
 
 pick() {
@@ -28,16 +109,19 @@ here="$(cd "$(dirname "$0")" && pwd)"
 catalog=""
 if command -v python3 >/dev/null 2>&1; then
   if [ -x "$here/../bin/nika-kit" ]; then
-    nika="$("$here/../bin/nika-kit" --path "$PWD" 2>/dev/null || true)"
+    nika="$(bash -p "$here/../bin/nika-kit" --path "$PWD" 2>/dev/null || true)"
   else
-    nika="${NIKA_BIN:-$(command -v nika 2>/dev/null || true)}"
+    case "${NIKA_BIN:-}" in
+      /*) nika="$NIKA_BIN" ;;
+      *) nika="$(nika_on_path 2>/dev/null || true)" ;;
+    esac
   fi
   [ -n "${nika:-}" ] && catalog="$("$nika" catalog --json 2>/dev/null || true)"
 fi
 route() { # route <provider id> <name when the catalog does not answer>
   local found=""
   if [ -n "$catalog" ]; then
-    found="$(printf '%s' "$catalog" | python3 -c 'import json, sys
+    found="$(printf '%s' "$catalog" | python3 -I -c 'import json, sys
 try:
     rows = json.load(sys.stdin).get("providers", [])
 except Exception:

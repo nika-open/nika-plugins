@@ -102,7 +102,7 @@ path"
 mkdir -p "$EVIL/.nika"
 play "$ROOT" "$(printf '{"cwd":"%s"}' "$EVIL")"
 if command -v python3 >/dev/null 2>&1; then
-  if printf '%s' "$OUT" | python3 -c 'import json,sys; json.loads(sys.stdin.read())' 2>/dev/null; then
+  if printf '%s' "$OUT" | python3 -I -c 'import json,sys; json.loads(sys.stdin.read())' 2>/dev/null; then
     pass "[control-char-path] envelope stays parseable JSON"
   else
     fail "[control-char-path] envelope broke on a control byte"

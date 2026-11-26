@@ -33,11 +33,63 @@ Exit code: 0 card printed and the check is clean · 2 card printed, the
 check refuses the file · 3 no card (no file, unreadable output) · 4 clean,
 and an effect was added since the plan · 127 no nika binary.
 """
+
+# >>> nika-isolated: every kit Python script starts with this same block,
+# before any other import (a test keeps the copies identical). The kit's
+# manifests start a hook script through python-hook.sh, which runs it with
+# -I from the start. Started by its shebang instead (an agent running a
+# helper), the script runs without -I, so PYTHONPATH and the user's site
+# folder would decide what its imports load: it starts itself again in
+# isolated mode first. What that first interpreter loads before this line
+# comes from the environment it was given (see the README).
+import os, sys
+
+if not sys.flags.isolated:
+    os.execv(sys.executable, [sys.executable, "-I", os.path.abspath(__file__), *sys.argv[1:]])
+# <<< nika-isolated
+
 import hashlib
 import json
-import os
 import subprocess
-import sys
+
+# >>> nika-clean-path: every kit Python script opens with this same block,
+# before it starts any program (a test keeps the copies identical). Hosts
+# start hooks in the open project, and the PATH can name folders the
+# repository holds, by a relative entry or by an absolute one that leads
+# there. Only the absolute entries whose real folder lies outside the
+# project are kept, as those real folders: the project is each of
+# CLAUDE_PROJECT_DIR, CURSOR_PROJECT_DIR and the working folder, with the
+# git work tree around each, never the home or a folder above it (the same
+# rule as the bash block).
+def _nika_clean_path(env):
+    def real(path):
+        return os.path.realpath(path) if os.path.isabs(path) and os.path.isdir(path) else ""
+
+    def within(path, root):
+        return path == root or path.startswith(root.rstrip(os.sep) + os.sep)
+
+    try:
+        here = os.getcwd()
+    except OSError:
+        here = ""
+    home = real(env.get("HOME", "")) or os.sep
+    roots = []
+    for start in (env.get("CLAUDE_PROJECT_DIR", ""), env.get("CURSOR_PROJECT_DIR", ""), here):
+        folder = real(start)
+        top = folder
+        while top and top != os.sep and not os.path.exists(os.path.join(top, ".git")):
+            top = os.path.dirname(top)
+        roots += [r for r in (folder, top) if r and r != os.sep and not within(home, r)]
+    kept = []
+    for entry in env.get("PATH", "").split(os.pathsep):
+        folder = real(entry)
+        if folder and not any(within(folder, root) for root in roots):
+            kept.append(folder)
+    return os.pathsep.join(kept) or os.pathsep.join(("/usr/bin", "/bin"))
+
+
+os.environ["PATH"] = _nika_clean_path(os.environ)
+# <<< nika-clean-path
 
 REVIEW_ABOVE_TASKS = 8
 TIERS = (
@@ -52,18 +104,23 @@ TIERS = (
 
 
 def nika_bin(location):
-    """The binary the kit resolved (bin/nika-kit), else NIKA_BIN, else PATH."""
+    """The absolute nika the kit resolver (bin/nika-kit) names for `location`.
+
+    The resolver takes NIKA_BIN only as an absolute path and searches the
+    PATH's absolute folders only, so the open project never supplies the
+    binary. When it names none, or cannot run, there is no binary.
+    """
     kit = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "bin", "nika-kit")
-    if os.access(kit, os.X_OK):
-        try:
-            out = subprocess.run(
-                [kit, "--path", location], capture_output=True, text=True, check=False, timeout=15
-            )
-            if out.returncode == 0 and out.stdout.strip():
-                return out.stdout.strip()
-        except (OSError, subprocess.SubprocessError):
-            pass
-    return os.environ.get("NIKA_BIN") or "nika"
+    try:
+        out = subprocess.run(
+            ["bash", "-p", kit, "--path", location], capture_output=True, text=True, check=False, timeout=15
+        )
+    except (OSError, subprocess.SubprocessError):
+        out = None
+    found = out.stdout.strip() if out is not None and out.returncode == 0 else ""
+    if not os.path.isabs(found):
+        raise FileNotFoundError("the kit resolver named no nika binary")
+    return found
 
 
 def call(cmd):
@@ -281,7 +338,11 @@ def main(argv):
     if not os.path.isfile(path):
         print(f"No card: {path} is not a file")
         return 3
-    nika = nika_bin(os.path.dirname(os.path.abspath(path)) or ".")
+    try:
+        nika = nika_bin(os.path.dirname(os.path.abspath(path)) or ".")
+    except FileNotFoundError:
+        print("nika is not installed: curl -LsSf https://nika.sh/install.sh | sh")
+        return 127
     checked = call([nika, "check", path, "--json", "--native-strict"])
     report = as_json(checked, "nika check")
     graph = as_json(call([nika, "inspect", path, "--format", "json"]), "nika inspect")
