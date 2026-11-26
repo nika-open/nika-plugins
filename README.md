@@ -1,8 +1,12 @@
 <p align="center">
   <a href="https://nika.sh">
     <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="https://nika.sh/brand/nika-logo-dark.svg">
-      <img src="https://nika.sh/brand/nika-logo-light.svg" alt="Nika" width="220">
+      <source media="(prefers-reduced-motion: reduce) and (prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/banner-nika-plugins-dark.png?v=0ea9d74e6c85">
+      <source media="(prefers-reduced-motion: reduce)" srcset="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/banner-nika-plugins-light.png?v=2ca437d9a3e1">
+      <source media="(prefers-color-scheme: dark)" type="image/webp" srcset="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/banner-nika-plugins-dark.webp?v=6ad7e5a2a413">
+      <source type="image/webp" srcset="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/banner-nika-plugins-light.webp?v=f024ed2cac77">
+      <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/banner-nika-plugins-dark.gif?v=f974709ec930">
+      <img src="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/banner-nika-plugins-light.gif?v=25e9b477a506" alt="Nika. For coding agents. Your coding agent writes the file. It turns the work you repeat into small workflow files: checked before a single token is spent, run when you ask, verifiable afterwards." width="100%">
     </picture>
   </a>
 </p>
@@ -18,7 +22,7 @@
   <a href=".claude-plugin/marketplace.json"><img src="https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fraw.githubusercontent.com%2Fnika-open%2Fnika-plugins%2Fmain%2F.claude-plugin%2Fmarketplace.json&query=%24.plugins%5B0%5D.version&label=plugin&prefix=v" alt="plugin version"></a>
   <a href="https://github.com/nika-open/nika-plugins/actions/workflows/gate.yml"><img src="https://github.com/nika-open/nika-plugins/actions/workflows/gate.yml/badge.svg" alt="gate status"></a>
   <a href="https://github.com/nika-open/nika/releases/latest"><img src="https://img.shields.io/github/v/release/nika-open/nika?label=engine" alt="Engine release"></a>
-  <a href="https://docs.nika.sh"><img src="https://img.shields.io/badge/docs-docs.nika.sh-8b8cf8.svg" alt="Documentation"></a>
+  <a href="https://docs.nika.sh"><img src="https://img.shields.io/badge/docs-docs.nika.sh-2650ff.svg" alt="Documentation"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0-blue.svg" alt="AGPL-3.0"></a>
   <br>
   <a href="https://scorecard.dev/viewer/?uri=github.com/nika-open/nika-plugins"><img src="https://api.scorecard.dev/projects/github.com/nika-open/nika-plugins/badge" alt="OpenSSF Scorecard"></a>
@@ -731,6 +735,13 @@ the versions it was checked with, and gated against the released binary.
 
 <!-- city:map -->
 ## 🦋 The Nika family
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/family-dark.png?v=4cfc8ec611de">
+    <img src="https://raw.githubusercontent.com/nika-open/.github/main/profile/assets/family-light.png?v=dfedffa46450" alt="The repositories of Nika. The language and its engine: nika-spec and nika. From the tools you already use: nika-plugins, nika-vscode, nika-client and gh-nika. On every pull request, and beyond: nika-action, nika-actions-starter, nika-registry, homebrew-tap, nika-estate and nika-docs." width="100%">
+  </picture>
+</p>
 
 | | Repository | What it gives you |
 |---|---|---|
