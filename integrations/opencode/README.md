@@ -46,7 +46,7 @@ Two facts we verified live so you don't have to:
 
 The oracle validates and teaches; running workflows stays on the terminal,
 where `--max-cost-usd`, effect permits and the trace live. Nine tools ride
-`tools/list`. At 0.125.1 the oracle also serves seven prompts over
+`tools/list`. At 0.125.2 the oracle also serves seven prompts over
 `prompts/list` (`check`, `explain`, `compile`, `trace`, `permits`, `ideas`,
 `capture`); the rest of the `/nika:*` commands, the skills and the hooks are a
 plugin feature, not an MCP one.

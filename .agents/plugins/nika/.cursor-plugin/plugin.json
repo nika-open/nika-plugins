@@ -2,7 +2,7 @@
   "name": "nika",
   "displayName": "Nika",
   "description": "Author, debug, operate and migrate AI workflows as checkable .nika files. Bundles 5 skills, 5 subagents, 2 rules, 14 commands (/check, /explain, /compile, /trace, /permits, /doctor, /make, /run, /pending, /ideas, /capture, /report, /improve, /connect), 3 hooks on every surface — Cursor, Claude Code and Codex (one dialect, sniffed) (session context, check-on-edit, a guard that audits before any nika run) and the read-only Nika MCP oracle (9 tools). Requires the nika binary: brew install nika-open/tap/nika. /make, /run, /pending, /report, /improve and /connect call helper scripts through the Claude Code plugin root; on Cursor each of them says how to do the same step with the nika binary alone",
-  "version": "0.125.1",
+  "version": "0.125.2",
   "author": {
     "name": "Nika",
     "email": "nika@supernovae.studio"

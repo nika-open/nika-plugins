@@ -28,6 +28,87 @@
 # The ONLY interpolated tokens are version strings sanitized to
 # [0-9.] (tr -cd) and the workspace root, JSON-escaped at emission —
 # so nothing user-controlled can break the JSON.
+
+# >>> nika-clean-path: every kit hook and helper opens with this same block,
+# before it starts any other program (a test keeps the copies identical).
+# Hosts start hooks in the open project, and the PATH can name folders the
+# repository holds: a relative entry (".", "bin", "node_modules/.bin", the
+# empty one) resolves there, and an absolute one can lead there too. Only
+# the absolute entries whose real folder (cd -P) lies outside the project
+# are kept, as those real folders. The project is each of
+# CLAUDE_PROJECT_DIR, CURSOR_PROJECT_DIR and the working folder, with the
+# git work tree around each (the nearest folder above holding .git), but
+# never the home or a folder above it. A function of builtins, run once in
+# a subshell (bash 3.2 cannot parse a case inside $(...)): nothing runs
+# before the PATH is set. The kit's manifests start this script with
+# /bin/bash -p (see the README for what that does and does not cover).
+nika_clean_path() {
+  local here dir top root home kept rest
+  here="${PWD:-}"
+  set --
+  home=/
+  case "${HOME:-}" in
+    /*) cd -P -- "$HOME" 2>/dev/null && home="$PWD" ;;
+  esac
+  for dir in "${CLAUDE_PROJECT_DIR:-}" "${CURSOR_PROJECT_DIR:-}" "$here"; do
+    case "$dir" in
+      /*) cd -P -- "$dir" 2>/dev/null || continue ;;
+      *) continue ;;
+    esac
+    top="$PWD"
+    while [ -n "$top" ] && [ ! -e "$top/.git" ]; do
+      top="${top%/*}"
+    done
+    for root in "$PWD" "$top"; do
+      case "$root" in
+        '' | /) continue ;;
+      esac
+      case "$home/" in
+        "$root"/*) continue ;;
+      esac
+      set -- "$@" "$root"
+    done
+  done
+  kept=""
+  rest="${PATH:-}"
+  while [ -n "$rest" ]; do
+    dir="${rest%%:*}"
+    case "$rest" in
+      *:*) rest="${rest#*:}" ;;
+      *) rest="" ;;
+    esac
+    case "$dir" in
+      /*) cd -P -- "$dir" 2>/dev/null || continue ;;
+      *) continue ;;
+    esac
+    for root; do
+      case "$PWD/" in
+        "$root"/*) continue 2 ;;
+      esac
+    done
+    kept="${kept:+$kept:}$PWD"
+  done
+  printf '%s' "$kept"
+}
+nika_path="$(nika_clean_path)"
+unset -f nika_clean_path
+PATH="${nika_path:-/usr/bin:/bin}"
+export PATH
+unset nika_path
+# nika_on_path: the nika this PATH names, as an absolute path, when there is
+# one. `type -P` searches the PATH alone: a function or an alias named nika
+# never answers.
+# shellcheck disable=SC2329 # not every script asks for nika
+nika_on_path() {
+  local bin
+  bin="$(type -P nika)" || return 1
+  case "$bin" in
+    /*) printf '%s\n' "$bin" ;;
+    *) return 1 ;;
+  esac
+}
+# <<< nika-clean-path
+
 set -euo pipefail
 
 # nika init stamps ONLY this slot in its project copy. The stamp describes
@@ -60,9 +141,12 @@ if [ -z "$plugin_root" ]; then
   plugin_root="$(cd "$(dirname "$0")/.." 2>/dev/null && pwd || true)"
 fi
 
-# Binary probe — PATH-based, workspace-independent.
+# Binary probe, workspace-independent: the nika the PATH names in its
+# absolute folders (the block above dropped the others). The version
+# handshake below runs this same file.
+bin="$(nika_on_path 2>/dev/null || true)"
 bin_ok=""
-command -v nika >/dev/null 2>&1 && bin_ok=1
+[ -n "$bin" ] && bin_ok=1
 
 install_teach='Nika kit note: the nika binary is not on PATH. Every surface of this kit (MCP oracle · /nika: commands · hooks · subagents) invokes it and stays dead until it lands. Install: brew install nika-open/tap/nika (other paths: nika.sh) · then restart the session.'
 
@@ -71,7 +155,7 @@ install_teach='Nika kit note: the nika binary is not on PATH. Every surface of t
 # a control byte would break the JSON envelope we later emit, and a
 # stripped path that resolves nowhere simply stays chat_only (P0-14).
 if command -v python3 >/dev/null 2>&1; then
-  cwd="$(printf '%s' "$input" | python3 -c 'import json,sys
+  cwd="$(printf '%s' "$input" | python3 -I -c 'import json,sys
 try:
     print(json.load(sys.stdin).get("cwd", ""))
 except Exception:
@@ -179,7 +263,7 @@ if [ -z "$kitv" ]; then
   kit_label='plugin kit'
   refresh=' Refresh the kit from your marketplace (Codex: codex plugin marketplace upgrade nika · Claude Code: claude plugin marketplace update nika, then claude plugin update nika@nika).'
 fi
-binv="$(nika --version 2>/dev/null | sed -nE 's/^nika ([^[:space:]]+).*$/\1/p' | release_version || true)"
+binv="$("$bin" --version 2>/dev/null | sed -nE 's/^nika ([^[:space:]]+).*$/\1/p' | release_version || true)"
 if [ -n "$kitv" ] && [ -n "$binv" ]; then
   kit_maj="$(printf '%s' "$kitv" | cut -d. -f1)"
   kit_min="$(printf '%s' "$kitv" | cut -d. -f2)"

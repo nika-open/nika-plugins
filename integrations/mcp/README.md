@@ -18,7 +18,7 @@ mcp_servers:
 { "mcpServers": { "nika": { "command": "nika", "args": ["mcp"] } } }
 ```
 
-`nika wire <client>` writes the stanza for you where supported — at 0.125.1
+`nika wire <client>` writes the stanza for you where supported — at 0.125.2
 the targets are cursor · vscode · windsurf · claude · claude-desktop · cline
 · codex · continue · zed · opencode · hermes · gemini · qwen · lmstudio ·
 junie · grok · antigravity · kimi · kiro · copilot · amp. `nika wire
@@ -89,7 +89,7 @@ list):
 | `nika_catalog` | provider/model ids · capabilities · required env vars |
 | `nika_tools` | the builtins an `invoke` reaches without any MCP server |
 
-At 0.125.1, `initialize` advertises the `tools` and `prompts` capabilities.
+At 0.125.2, `initialize` advertises the `tools` and `prompts` capabilities.
 `prompts/list` serves seven prompts, `check`, `explain`, `compile`, `trace`,
 `permits`, `ideas` and `capture`, the same jobs as the plugin's `/nika:*`
 commands of those names. The other commands, the skills, subagents and hooks

@@ -12,12 +12,14 @@
 # the choice comes from the session's environment or from the PATH.
 #
 # Order, first match wins:
-#   1. NIKA_BIN, when set: the pin. A pin that names no executable is an
-#      error, never a silent fall back to another binary.
+#   1. NIKA_BIN, when set: the pin. A pin that is not an absolute path or
+#      names no executable is an error, never a silent fall back to another
+#      binary.
 #   2. Inside the engine tree only: $CARGO_TARGET_DIR/debug/nika, when that
 #      variable is an absolute path that does not resolve inside the
 #      repository (the session's own build folder).
-#   3. The first `nika` on the PATH.
+#   3. The first `nika` in an absolute PATH folder: a relative entry (".",
+#      "bin", the empty one) resolves against the project and is skipped.
 #
 # A build under a tree's own target/debug is never chosen, engine tree
 # included. The default mode says so in one line when one exists, with the
@@ -36,6 +38,87 @@
 #                                  exit 0 when this binary has it, 1 when not,
 #                                  2 with no binary. Features: consent
 #                                  (a `consent` verb), mcp-shelf (`catalog --mcp`)
+
+# >>> nika-clean-path: every kit hook and helper opens with this same block,
+# before it starts any other program (a test keeps the copies identical).
+# Hosts start hooks in the open project, and the PATH can name folders the
+# repository holds: a relative entry (".", "bin", "node_modules/.bin", the
+# empty one) resolves there, and an absolute one can lead there too. Only
+# the absolute entries whose real folder (cd -P) lies outside the project
+# are kept, as those real folders. The project is each of
+# CLAUDE_PROJECT_DIR, CURSOR_PROJECT_DIR and the working folder, with the
+# git work tree around each (the nearest folder above holding .git), but
+# never the home or a folder above it. A function of builtins, run once in
+# a subshell (bash 3.2 cannot parse a case inside $(...)): nothing runs
+# before the PATH is set. The kit's manifests start this script with
+# /bin/bash -p (see the README for what that does and does not cover).
+nika_clean_path() {
+  local here dir top root home kept rest
+  here="${PWD:-}"
+  set --
+  home=/
+  case "${HOME:-}" in
+    /*) cd -P -- "$HOME" 2>/dev/null && home="$PWD" ;;
+  esac
+  for dir in "${CLAUDE_PROJECT_DIR:-}" "${CURSOR_PROJECT_DIR:-}" "$here"; do
+    case "$dir" in
+      /*) cd -P -- "$dir" 2>/dev/null || continue ;;
+      *) continue ;;
+    esac
+    top="$PWD"
+    while [ -n "$top" ] && [ ! -e "$top/.git" ]; do
+      top="${top%/*}"
+    done
+    for root in "$PWD" "$top"; do
+      case "$root" in
+        '' | /) continue ;;
+      esac
+      case "$home/" in
+        "$root"/*) continue ;;
+      esac
+      set -- "$@" "$root"
+    done
+  done
+  kept=""
+  rest="${PATH:-}"
+  while [ -n "$rest" ]; do
+    dir="${rest%%:*}"
+    case "$rest" in
+      *:*) rest="${rest#*:}" ;;
+      *) rest="" ;;
+    esac
+    case "$dir" in
+      /*) cd -P -- "$dir" 2>/dev/null || continue ;;
+      *) continue ;;
+    esac
+    for root; do
+      case "$PWD/" in
+        "$root"/*) continue 2 ;;
+      esac
+    done
+    kept="${kept:+$kept:}$PWD"
+  done
+  printf '%s' "$kept"
+}
+nika_path="$(nika_clean_path)"
+unset -f nika_clean_path
+PATH="${nika_path:-/usr/bin:/bin}"
+export PATH
+unset nika_path
+# nika_on_path: the nika this PATH names, as an absolute path, when there is
+# one. `type -P` searches the PATH alone: a function or an alias named nika
+# never answers.
+# shellcheck disable=SC2329 # not every script asks for nika
+nika_on_path() {
+  local bin
+  bin="$(type -P nika)" || return 1
+  case "$bin" in
+    /*) printf '%s\n' "$bin" ;;
+    *) return 1 ;;
+  esac
+}
+# <<< nika-clean-path
+
 set -u
 
 mode=show
@@ -51,7 +134,7 @@ case "${1:-}" in
     shift 2 2>/dev/null || shift
     ;;
   -h | --help)
-    sed -n '3,38p' "$0" | sed 's/^# \{0,1\}//'
+    sed -n '3,40p' "$0" | sed 's/^# \{0,1\}//'
     exit 0
     ;;
 esac
@@ -77,7 +160,15 @@ bin=""
 why=""
 root=""
 if [ -n "${NIKA_BIN:-}" ]; then
-  if command -v "$NIKA_BIN" >/dev/null 2>&1; then
+  case "$NIKA_BIN" in
+    /*) ;;
+    *)
+      echo "nika-kit: NIKA_BIN is not an absolute path, which would resolve against the folder a helper runs in; set it to an absolute path or unset it" >&2
+      [ "$mode" = has ] && exit 2
+      exit 1
+      ;;
+  esac
+  if [ -f "$NIKA_BIN" ] && [ -x "$NIKA_BIN" ]; then
     bin="$NIKA_BIN"
     why="NIKA_BIN pins it"
   else
@@ -94,9 +185,8 @@ else
   bin="$(session_build "$root")"
   if [ -n "$bin" ]; then
     why="the session's build of the engine tree at $root (CARGO_TARGET_DIR, outside the tree)"
-  elif command -v nika >/dev/null 2>&1; then
-    bin="$(command -v nika)"
-    why="the first nika on the PATH"
+  elif bin="$(nika_on_path)"; then
+    why="the first nika on the PATH (its absolute folders only)"
   fi
 fi
 
@@ -121,7 +211,7 @@ case "$mode" in
   show)
     version="$("$bin" --version 2>/dev/null | head -n 1)"
     printf 'path: %s\nwhy: %s\nversion: %s\n' "$bin" "$why" "${version:-did not answer --version}"
-    on_path="$(command -v nika 2>/dev/null || true)"
+    on_path="$(nika_on_path || true)"
     if [ -n "$on_path" ] && [ "$on_path" != "$bin" ]; then
       printf 'note: the run guard judges with the PATH binary (%s), not this one\n' "$on_path"
     fi

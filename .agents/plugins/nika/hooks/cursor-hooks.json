@@ -1,18 +1,20 @@
 {
+  "version": 1,
   "hooks": {
     "sessionStart": [
       {
-        "command": "./scripts/session-context.sh"
+        "command": "/bin/bash -p ./scripts/session-context.sh"
       }
     ],
     "afterFileEdit": [
       {
-        "command": "./scripts/check-on-edit.sh"
+        "command": "/bin/bash -p ./scripts/check-on-edit.sh"
       }
     ],
     "beforeShellExecution": [
       {
-        "command": "./scripts/guard-run.sh"
+        "command": "/bin/bash -p ./scripts/guard-run.sh",
+        "timeout": 30
       }
     ]
   }
